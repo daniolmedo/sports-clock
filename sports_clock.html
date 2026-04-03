@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <title>Sports Clock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:            #F2F2F7;
+      --bg2:           #E5E5EA;
+      --card:          #FFFFFF;
+      --blue:          #007AFF;
+      --blue-soft:     rgba(0,122,255,0.10);
+      --green:         #34C759;
+      --red:           #FF3B30;
+      --yellow:        #FFD60A;
+      --primary-text:  #1C1C1E;
+      --secondary-text:#8E8E93;
+      --tertiary-text: #C7C7CC;
+      --separator:     rgba(60,60,67,0.12);
+      --shadow-sm:     0 1px 8px rgba(0,0,0,0.07);
+      --shadow:        0 4px 20px rgba(0,0,0,0.09);
+      --shadow-lg:     0 8px 40px rgba(0,0,0,0.16);
+      --radius:        18px;
+      --radius-sm:     12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:            #000;
+        --bg2:           #1C1C1E;
+        --card:          #1C1C1E;
+        --primary-text:  #FFF;
+        --secondary-text:#8E8E93;
+        --tertiary-text: #48484A;
+        --separator:     rgba(84,84,88,0.36);
+        --shadow-sm:     0 1px 8px rgba(0,0,0,0.3);
+        --shadow:        0 4px 20px rgba(0,0,0,0.4);
+        --shadow-lg:     0 8px 40px rgba(0,0,0,0.6);
+      }
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { -webkit-text-size-adjust:none; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+      background: var(--bg);
+      color: var(--primary-text);
+      min-height: 100vh;
+      max-width: 430px;
+      margin: 0 auto;
+      padding-bottom: 100px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* HEADER */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      padding: 54px 20px 0;
+      background: var(--bg);
+    }
+    .header-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .app-name { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+    .app-date  { font-size: 14px; color: var(--secondary-text); font-weight: 500; margin-top: 4px; }
+    .icon-btn {
+      width: 38px; height: 38px; background: var(--card); border: none;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; cursor: pointer; box-shadow: var(--shadow-sm); flex-shrink: 0;
+      transition: transform .15s, opacity .15s;
+    }
+    .icon-btn:active { transform: scale(.92); opacity: .8; }
+
+    /* PILLS */
+    .pills-track {
+      display: flex; gap: 8px; padding: 8px 20px 12px;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .pills-track::-webkit-scrollbar { display: none; }
+    .pill {
+      flex-shrink: 0; padding: 7px 16px; border-radius: 100px; border: none;
+      background: var(--card); color: var(--secondary-text);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      box-shadow: var(--shadow-sm); transition: all .2s; white-space: nowrap;
+    }
+    .pill.on { background: var(--blue); color: #fff; }
+
+    /* TAB BAR */
+    .tab-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px; display: flex;
+      background: var(--card); border-top: 1px solid var(--separator);
+      padding: 8px 0 28px; z-index: 200;
+    }
+    .tab {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      border: none; background: none; cursor: pointer; color: var(--secondary-text);
+      padding: 4px 0; transition: color .2s;
+    }
+    .tab.on { color: var(--blue); }
+    .tab-icon  { font-size: 23px; }
+    .tab-label { font-size: 10px; font-weight: 600; letter-spacing: .1px; }
+
+    /* PAGES */
+    .page { display: none; padding: 0 16px; }
+    .page.on { display: block; }
+
+    /* SECTION ROW */
+    .section-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 4px 0 14px; padding: 0 4px;
+    }
+    .section-title { font-size: 22px; font-weight: 700; letter-spacing: -.4px; }
+    .badge-count {
+      font-size: 12px; font-weight: 600; color: var(--secondary-text);
+      background: var(--bg2); padding: 3px 10px; border-radius: 100px;
+    }
+
+    /* DAY STRIP */
+    .day-strip { display: flex; gap: 8px; padding: 0 0 14px; overflow-x: auto; scrollbar-width: none; }
+    .day-strip::-webkit-scrollbar { display: none; }
+    .day-btn {
+      flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 10px 14px; border-radius: var(--radius-sm); background: var(--card); border: none;
+      cursor: pointer; transition: all .2s; box-shadow: var(--shadow-sm);
+    }
+    .day-btn.on { background: var(--blue); }
+    .day-lbl { font-size: 10px; font-weight: 700; color: var(--secondary-text); text-transform: uppercase; letter-spacing: .5px; }
+    .day-num { font-size: 20px; font-weight: 700; color: var(--primary-text); }
+    .day-btn.on .day-lbl, .day-btn.on .day-num { color: #fff; }
+    .day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+    .day-btn.on .day-dot { background: rgba(255,255,255,.7); }
+
+    /* MATCH CARD */
+    .match-card {
+      background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+      box-shadow: var(--shadow-sm); transition: transform .15s;
+    }
+    .match-card:active { transform: scale(.985); }
+    .match-card.is-fav { border-left: 3px solid var(--yellow); padding-left: 13px; }
+
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .league-tag { display: flex; align-items: center; gap: 7px; }
+    .league-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .league-lbl { font-size: 11px; font-weight: 700; color: var(--secondary-text); text-transform: uppercase; letter-spacing: .6px; }
+
+    .live-pill {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--red); color: #fff; font-size: 10px; font-weight: 800;
+      padding: 4px 9px; border-radius: 100px; letter-spacing: .5px;
+    }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: blink 1.4s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .time-pill { font-size: 13px; font-weight: 600; color: var(--secondary-text); background: var(--bg); padding: 5px 11px; border-radius: 100px; }
+    .fin-pill  { font-size: 12px; font-weight: 600; color: var(--tertiary-text); background: var(--bg); padding: 5px 11px; border-radius: 100px; }
+
+    .teams-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .team-col  { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
+    .team-emblem {
+      width: 52px; height: 52px; border-radius: 50%; background: var(--bg);
+      display: flex; align-items: center; justify-content: center; font-size: 26px; overflow: hidden;
+    }
+    .team-emblem img { width: 42px; height: 42px; object-fit: contain; }
+    .team-name { font-size: 13px; font-weight: 600; text-align: center; max-width: 100px; line-height: 1.25; }
+
+    .center-col { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 10px; flex-shrink: 0; }
+    .score-txt  { font-size: 30px; font-weight: 800; letter-spacing: -1.5px; }
+    .vs-txt     { font-size: 12px; font-weight: 700; color: var(--tertiary-text); letter-spacing: 1px; }
+    .day-small  { font-size: 10px; color: var(--tertiary-text); font-weight: 500; text-align: center; }
+
+    .card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--separator); gap: 8px; }
+    .channel-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .ch-icon { font-size: 14px; flex-shrink: 0; }
+    .ch-name { font-size: 12px; font-weight: 600; color: var(--secondary-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .remind-btn {
+      display: flex; align-items: center; gap: 5px; background: none;
+      border: 1.5px solid var(--blue); color: var(--blue); border-radius: 100px;
+      padding: 6px 13px; font-size: 12px; font-weight: 700; cursor: pointer;
+      white-space: nowrap; flex-shrink: 0; transition: all .2s;
+    }
+    .remind-btn.on { background: var(--blue); color: #fff; }
+    .remind-btn:active { transform: scale(.94); }
+
+    /* EMPTY / LOADING */
+    .placeholder { text-align: center; padding: 60px 20px; }
+    .ph-icon  { font-size: 52px; margin-bottom: 14px; }
+    .ph-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .ph-body  { font-size: 14px; color: var(--secondary-text); line-height: 1.5; }
+
+    .loading-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 60px 0; color: var(--secondary-text); font-size: 14px; font-weight: 500; }
+    .spinner { width: 30px; height: 30px; border: 3px solid var(--separator); border-top-color: var(--blue); border-radius: 50%; animation: spin .9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* API STATUS BANNER */
+    .api-banner {
+      display: none; margin: 0 0 14px; padding: 12px 16px; background: #FFF3CD;
+      border-radius: var(--radius-sm); border-left: 4px solid var(--yellow);
+      font-size: 13px; font-weight: 500; color: #856404; line-height: 1.4;
+    }
+    @media (prefers-color-scheme: dark) {
+      .api-banner { background: #332700; color: #FFC107; border-color: #FFC107; }
+    }
+    .api-banner.show { display: block; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; top: 20px; left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      background: var(--card); color: var(--primary-text);
+      padding: 12px 20px; border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 600; box-shadow: var(--shadow-lg);
+      z-index: 9999; transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap; pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* MODAL / SHEET */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      z-index: 500; display: flex; align-items: flex-end;
+      opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .overlay.show { opacity: 1; pointer-events: auto; }
+    .sheet {
+      background: var(--card); border-radius: 24px 24px 0 0; width: 100%;
+      max-height: 88vh; overflow-y: auto; padding: 12px 20px 48px;
+      transform: translateY(40px); transition: transform .3s cubic-bezier(.32,.72,0,1);
+    }
+    .overlay.show .sheet { transform: translateY(0); }
+    .sheet-handle { width: 36px; height: 4px; background: var(--separator); border-radius: 100px; margin: 0 auto 20px; }
+    .sheet-title  { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .sheet-sub    { font-size: 14px; color: var(--secondary-text); margin-bottom: 20px; }
+
+    .modal-section-title { font-size: 12px; font-weight: 700; color: var(--secondary-text); text-transform: uppercase; letter-spacing: .7px; margin: 16px 0 10px 2px; }
+    .teams-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .team-tile {
+      background: var(--bg); border-radius: var(--radius-sm);
+      padding: 14px 8px 12px; display: flex; flex-direction: column;
+      align-items: center; gap: 7px; cursor: pointer;
+      border: 2px solid transparent; position: relative; transition: all .18s;
+    }
+    .team-tile.on { border-color: var(--blue); background: var(--blue-soft); }
+    .team-tile:active { transform: scale(.95); }
+    .tile-emblem { font-size: 28px; }
+    .tile-name   { font-size: 11px; font-weight: 600; text-align: center; line-height: 1.3; color: var(--primary-text); }
+    .tile-league { font-size: 10px; color: var(--secondary-text); }
+    .tile-check  {
+      position: absolute; top: 5px; right: 5px; width: 18px; height: 18px;
+      background: var(--blue); border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 10px; color: #fff; font-weight: 700;
+    }
+    .save-btn {
+      width: 100%; padding: 16px; background: var(--blue); color: #fff; border: none;
+      border-radius: var(--radius-sm); font-size: 16px; font-weight: 700;
+      cursor: pointer; margin-top: 18px; transition: opacity .2s, transform .15s;
+    }
+    .save-btn:active { opacity: .85; transform: scale(.98); }
+
+    /* FAV CHIPS */
+    .fav-header { font-size: 13px; color: var(--secondary-text); font-weight: 500; padding: 0 4px; margin-bottom: 14px; line-height: 1.5; }
+    .fav-chip { display: inline-block; background: var(--blue-soft); color: var(--blue); border-radius: 100px; padding: 2px 9px; font-size: 12px; font-weight: 600; margin: 2px 3px 2px 0; }
+
+    /* ERROR CARD */
+    .error-card {
+      background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+      border-left: 3px solid var(--red); box-shadow: var(--shadow-sm); font-size: 13px;
+      color: var(--secondary-text);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <div class="app-name">Sports Clock 🏟️</div>
+        <div class="app-date" id="current-date"></div>
+      </div>
+      <button class="icon-btn" id="fav-open-btn" title="Equipos favoritos">⭐</button>
+    </div>
+  </div>
+
+  <!-- LEAGUE PILLS -->
+  <div class="pills-track" id="pills-track"></div>
+
+  <!-- PAGE: HOY -->
+  <div class="page on" id="page-hoy">
+    <div class="section-row">
+      <span class="section-title">Hoy</span>
+      <span class="badge-count" id="cnt-hoy">—</span>
+    </div>
+    <div class="api-banner" id="banner-hoy"></div>
+    <div id="list-hoy">
+      <div class="loading-wrap"><div class="spinner"></div><span>Cargando partidos…</span></div>
+    </div>
+  </div>
+
+  <!-- PAGE: SEMANA -->
+  <div class="page" id="page-semana">
+    <div class="day-strip" id="day-strip"></div>
+    <div class="section-row">
+      <span class="section-title" id="week-title">Esta semana</span>
+    </div>
+    <div id="list-semana">
+      <div class="loading-wrap"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- PAGE: FAVORITOS -->
+  <div class="page" id="page-favs">
+    <div class="section-row">
+      <span class="section-title">Mis equipos</span>
+    </div>
+    <div id="list-favs"></div>
+  </div>
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar" id="tab-bar">
+    <button class="tab on" data-tab="hoy">
+      <span class="tab-icon">📅</span><span class="tab-label">Hoy</span>
+    </button>
+    <button class="tab" data-tab="semana">
+      <span class="tab-icon">📆</span><span class="tab-label">Semana</span>
+    </button>
+    <button class="tab" data-tab="favs">
+      <span class="tab-icon">⭐</span><span class="tab-label">Favoritos</span>
+    </button>
+  </nav>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- MODAL: FAVORITOS -->
+  <div class="overlay" id="fav-overlay">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Mis equipos favoritos</div>
+      <div class="sheet-sub">Selecciona los equipos que quieres seguir de cerca</div>
+      <div id="teams-container"></div>
+      <button class="save-btn" id="save-favs-btn">Guardar favoritos</button>
+    </div>
+  </div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  LIGAS  — ESPN public API (no key, CORS enabled)
+// ═══════════════════════════════════════════════════
+const LEAGUES = [
+  { id:'ucl',  slug:'UEFA.CHAMPIONS',        name:'Champions',   full:'Champions League',      emoji:'🏆', color:'#1A3A6B', channels:['Paramount+','ESPN']          },
+  { id:'laliga',slug:'esp.1',                name:'La Liga',     full:'La Liga España',         emoji:'🇪🇸', color:'#EE3B2F', channels:['ESPN','Disney+']             },
+  { id:'arg',  slug:'arg.1',                 name:'Argentina',   full:'Primera Argentina',      emoji:'🇦🇷', color:'#74ACDF', channels:['Disney+','ESPN']             },
+  { id:'chi',  slug:'chi.1',                 name:'Chile',       full:'Primera Chile',          emoji:'🇨🇱', color:'#D52B1E', channels:['TNT Sports']                 },
+  { id:'lib',  slug:'CONMEBOL.LIBERTADORES', name:'Libertad.',   full:'Copa Libertadores',      emoji:'🌎', color:'#B8860B', channels:['Disney+','Chilevisión']      },
+  { id:'pl',   slug:'eng.1',                 name:'Premier',     full:'Premier League',         emoji:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', color:'#3D195B', channels:['ESPN','Disney+']             },
+];
+
+const POPULAR_TEAMS = {
+  'Primera Chile': [
+    { name:'Colo-Colo',      emoji:'⚫' },
+    { name:'U de Chile',     emoji:'🔵' },
+    { name:'U Española',     emoji:'🔴' },
+    { name:'Audax Italiano', emoji:'🟢' },
+    { name:'Palestino',      emoji:'🔴' },
+    { name:'Huachipato',     emoji:'⚙️' },
+  ],
+  'Copa Libertadores': [
+    { name:'Colo-Colo',      emoji:'⚫' },
+    { name:'Boca Juniors',   emoji:'💛' },
+    { name:'River Plate',    emoji:'🔴' },
+    { name:'Flamengo',       emoji:'🔴' },
+    { name:'Palmeiras',      emoji:'🟢' },
+    { name:'Nacional',       emoji:'🔵' },
+  ],
+  'La Liga': [
+    { name:'Real Madrid',    emoji:'⚪' },
+    { name:'Barcelona',      emoji:'🔵' },
+    { name:'Atlético Madrid',emoji:'🔴' },
+    { name:'Athletic Club',  emoji:'🔴' },
+    { name:'Real Betis',     emoji:'🟢' },
+    { name:'Sevilla',        emoji:'⚪' },
+  ],
+  'Primera Argentina': [
+    { name:'Boca Juniors',   emoji:'💛' },
+    { name:'River Plate',    emoji:'🔴' },
+    { name:'Racing Club',    emoji:'💙' },
+    { name:'Independiente',  emoji:'🔴' },
+    { name:'San Lorenzo',    emoji:'🔵' },
+    { name:'Huracán',        emoji:'⚽' },
+  ],
+  'Champions League': [
+    { name:'Real Madrid',    emoji:'⚪' },
+    { name:'Manchester City',emoji:'💙' },
+    { name:'Bayern Munich',  emoji:'🔴' },
+    { name:'PSG',            emoji:'🔵' },
+    { name:'Arsenal',        emoji:'🔴' },
+    { name:'Inter',          emoji:'🖤' },
+  ],
+  'Premier League': [
+    { name:'Arsenal',        emoji:'🔴' },
+    { name:'Manchester City',emoji:'💙' },
+    { name:'Liverpool',      emoji:'❤️' },
+    { name:'Chelsea',        emoji:'🔵' },
+    { name:'Man United',     emoji:'🔴' },
+    { name:'Tottenham',      emoji:'⚪' },
+  ],
+};
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let allEvents     = [];          // parsed events
+let activeLeague  = 'all';
+let activeTab     = 'hoy';
+let selectedDay   = todayDateStr();  // 'YYYY-MM-DD' Chile TZ
+let reminders     = JSON.parse(localStorage.getItem('sc_reminders') || '{}');
+let favoriteTeams = JSON.parse(localStorage.getItem('sc_favorites') || '[]');
+let tmpFavs       = [];
+let apiErrors     = [];
+
+// ═══════════════════════════════════════════════════
+//  DATE HELPERS  (all Chile TZ)
+// ═══════════════════════════════════════════════════
+function chileNow() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+}
+
+function todayDateStr() {
+  const d = chileNow();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function toChileDateStr(utcDate) {
+  // Returns 'YYYY-MM-DD' in Chile TZ for a given Date object
+  return utcDate.toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+}
+
+function fmtTime(utcDate) {
+  return utcDate.toLocaleTimeString('es-CL', {
+    timeZone: 'America/Santiago', hour:'2-digit', minute:'2-digit', hour12: false
+  });
+}
+
+function fmtDateShort(utcDate) {
+  return utcDate.toLocaleDateString('es-CL', {
+    timeZone: 'America/Santiago', weekday:'short', day:'numeric', month:'short'
+  });
+}
+
+function fmtDateFull(dateStr) {
+  // dateStr = 'YYYY-MM-DD'
+  const d = new Date(dateStr + 'T12:00:00');
+  const s = d.toLocaleDateString('es-CL', { weekday:'long', day:'numeric', month:'long' });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function espnDateParam(dateStr) {
+  // '2026-04-05' → '20260405'
+  return dateStr.replace(/-/g, '');
+}
+
+// ═══════════════════════════════════════════════════
+//  ESPN API
+// ═══════════════════════════════════════════════════
+async function fetchESPN(slug, dateStr) {
+  const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${espnDateParam(dateStr)}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    return j.events || [];
+  } catch (e) {
+    console.warn(`ESPN fetch failed [${slug}/${dateStr}]:`, e.message);
+    return null; // null = error (vs [] = no events that day)
+  }
+}
+
+function parseESPNEvent(rawEvent, leagueId) {
+  const comp     = rawEvent.competitions?.[0];
+  const home     = comp?.competitors?.find(c => c.homeAway === 'home');
+  const away     = comp?.competitors?.find(c => c.homeAway === 'away');
+  const status   = comp?.status?.type;
+  const state    = status?.state;       // 'pre' | 'in' | 'post'
+  const finished = status?.completed;
+  const utcDate  = new Date(rawEvent.date);
+
+  return {
+    _lid:      leagueId,
+    _utcDate:  utcDate,
+    _dateStr:  toChileDateStr(utcDate),  // Chile date
+    id:        rawEvent.id,
+    home:      home?.team?.displayName || '—',
+    away:      away?.team?.displayName || '—',
+    homeLogo:  home?.team?.logo || null,
+    awayLogo:  away?.team?.logo || null,
+    homeScore: finished ? (home?.score ?? null) : null,
+    awayScore: finished ? (away?.score ?? null) : null,
+    state,      // 'pre' | 'in' | 'post'
+    finished,
+  };
+}
+
+async function loadEvents() {
+  apiErrors = [];
+  showSkeletons();
+
+  // Build date list: today + next 6 days = 7 days
+  const today = chileNow();
+  const dates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  });
+
+  // 6 leagues × 7 days = 42 parallel requests
+  const fetches = LEAGUES.flatMap(league =>
+    dates.map(dateStr =>
+      fetchESPN(league.slug, dateStr).then(rawEvents => {
+        if (rawEvents === null) {
+          apiErrors.push(league.id);
+          return [];
+        }
+        return rawEvents.map(e => parseESPNEvent(e, league.id));
+      })
+    )
+  );
+
+  const results = await Promise.all(fetches);
+  allEvents = results
+    .flat()
+    .filter((e, i, arr) => arr.findIndex(x => x.id === e.id) === i) // dedupe by id
+    .sort((a, b) => a._utcDate - b._utcDate);
+
+  renderAll();
+  scheduleAllNotifications();
+}
+
+// ═══════════════════════════════════════════════════
+//  FILTER
+// ═══════════════════════════════════════════════════
+function filtered() {
+  if (activeLeague === 'all') return allEvents;
+  return allEvents.filter(e => e._lid === activeLeague);
+}
+
+function eventsForDay(dayStr) {
+  return filtered().filter(e => e._dateStr === dayStr);
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: PILLS
+// ═══════════════════════════════════════════════════
+function buildPills() {
+  const track = document.getElementById('pills-track');
+  track.innerHTML =
+    `<button class="pill on" data-lid="all">Todos</button>` +
+    LEAGUES.map(l => `<button class="pill" data-lid="${l.id}">${l.emoji} ${l.name}</button>`).join('');
+  track.querySelectorAll('.pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeLeague = btn.dataset.lid;
+      track.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
+      btn.classList.add('on');
+      renderAll();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: MATCH CARD
+// ═══════════════════════════════════════════════════
+function getLeague(lid) { return LEAGUES.find(l => l.id === lid) || LEAGUES[0]; }
+
+function isFavMatch(ev) {
+  return favoriteTeams.some(t =>
+    ev.home.toLowerCase().includes(t.toLowerCase()) ||
+    ev.away.toLowerCase().includes(t.toLowerCase())
+  );
+}
+
+function cardHTML(ev) {
+  const lg       = getLeague(ev._lid);
+  const live     = ev.state === 'in';
+  const fin      = ev.finished;
+  const hasScore = ev.homeScore !== null;
+  const fav      = isFavMatch(ev);
+  const reminded = !!reminders[ev.id];
+
+  const homeBadge = ev.homeLogo
+    ? `<img src="${ev.homeLogo}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${lg.emoji}'))">`
+    : lg.emoji;
+  const awayBadge = ev.awayLogo
+    ? `<img src="${ev.awayLogo}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${lg.emoji}'))">`
+    : lg.emoji;
+
+  const timePill = live
+    ? `<span class="live-pill"><span class="live-dot"></span>EN VIVO</span>`
+    : fin
+      ? `<span class="fin-pill">Finalizado</span>`
+      : `<span class="time-pill">🕐 ${fmtTime(ev._utcDate)}</span>`;
+
+  const centerBlock = hasScore
+    ? `<div class="score-txt">${ev.homeScore} – ${ev.awayScore}</div>`
+    : `<div class="vs-txt">VS</div><div class="day-small">${fmtDateShort(ev._utcDate)}</div>`;
+
+  const footerRight = fin
+    ? ``
+    : `<button class="remind-btn ${reminded ? 'on' : ''}"
+         data-eid="${ev.id}"
+         data-home="${ev.home.replace(/"/g,'')}"
+         data-away="${ev.away.replace(/"/g,'')}">
+         ${reminded ? '🔔 Recordando' : '🔕 Recordar'}
+       </button>`;
+
+  return `
+    <div class="match-card${fav ? ' is-fav' : ''}">
+      <div class="card-top">
+        <div class="league-tag">
+          <div class="league-dot" style="background:${lg.color}"></div>
+          <span class="league-lbl">${lg.full}</span>
+          ${fav ? '<span style="font-size:13px;margin-left:2px">⭐</span>' : ''}
+        </div>
+        ${timePill}
+      </div>
+      <div class="teams-row">
+        <div class="team-col">
+          <div class="team-emblem">${homeBadge}</div>
+          <div class="team-name">${ev.home}</div>
+        </div>
+        <div class="center-col">${centerBlock}</div>
+        <div class="team-col">
+          <div class="team-emblem">${awayBadge}</div>
+          <div class="team-name">${ev.away}</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="channel-row">
+          <span class="ch-icon">📺</span>
+          <span class="ch-name">${lg.channels.join(' · ')}</span>
+        </div>
+        ${footerRight}
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: PAGES
+// ═══════════════════════════════════════════════════
+function renderAll() {
+  renderHoy();
+  if (activeTab === 'semana') renderSemana();
+  renderFavs();
+}
+
+function renderHoy() {
+  const today = todayDateStr();
+  const evs   = eventsForDay(today);
+  document.getElementById('cnt-hoy').textContent = `${evs.length} partido${evs.length !== 1 ? 's' : ''}`;
+
+  // Show banner if errors
+  const banner = document.getElementById('banner-hoy');
+  if (apiErrors.length > 0) {
+    banner.textContent = '⚠️ Algunos datos pueden estar incompletos. La app se actualizará automáticamente.';
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+
+  const list = document.getElementById('list-hoy');
+  if (evs.length === 0) {
+    list.innerHTML = `<div class="placeholder">
+      <div class="ph-icon">😴</div>
+      <div class="ph-title">Sin partidos hoy</div>
+      <div class="ph-body">No hay partidos programados para hoy en las ligas seleccionadas. ¡Revisa la semana!</div>
+    </div>`;
+  } else {
+    list.innerHTML = evs.map(cardHTML).join('');
+  }
+  bindReminders(list);
+}
+
+function buildDayStrip() {
+  const strip = document.getElementById('day-strip');
+  strip.innerHTML = '';
+  const today = chileNow();
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const hasEvs = allEvents.some(e => e._dateStr === ds);
+
+    const btn = document.createElement('button');
+    btn.className = 'day-btn' + (ds === selectedDay ? ' on' : '');
+    const dayName = i === 0 ? 'HOY' : d.toLocaleDateString('es-CL', { timeZone:'America/Santiago', weekday:'short' });
+    btn.innerHTML = `
+      <span class="day-lbl">${dayName}</span>
+      <span class="day-num">${d.getDate()}</span>
+      <span class="day-dot" style="visibility:${hasEvs ? 'visible' : 'hidden'}"></span>`;
+    btn.addEventListener('click', () => {
+      selectedDay = ds;
+      strip.querySelectorAll('.day-btn').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      renderSemanaDay();
+    });
+    strip.appendChild(btn);
+  }
+}
+
+function renderSemana() {
+  buildDayStrip();
+  renderSemanaDay();
+}
+
+function renderSemanaDay() {
+  const evs  = eventsForDay(selectedDay);
+  document.getElementById('week-title').textContent = fmtDateFull(selectedDay);
+  const list = document.getElementById('list-semana');
+  if (evs.length === 0) {
+    list.innerHTML = `<div class="placeholder">
+      <div class="ph-icon">🗓️</div>
+      <div class="ph-title">Sin partidos</div>
+      <div class="ph-body">No hay partidos programados para este día en las ligas seleccionadas.</div>
+    </div>`;
+  } else {
+    list.innerHTML = evs.map(cardHTML).join('');
+  }
+  bindReminders(list);
+}
+
+function renderFavs() {
+  const container = document.getElementById('list-favs');
+  if (favoriteTeams.length === 0) {
+    container.innerHTML = `<div class="placeholder">
+      <div class="ph-icon">⭐</div>
+      <div class="ph-title">Sin equipos favoritos</div>
+      <div class="ph-body">Toca el ⭐ arriba para seleccionar tus equipos y ver sus próximos partidos aquí.</div>
+    </div>`;
+    return;
+  }
+  const evs  = allEvents.filter(isFavMatch);
+  const chips = favoriteTeams.map(t => `<span class="fav-chip">${t}</span>`).join('');
+  if (evs.length === 0) {
+    container.innerHTML = `<div class="fav-header">Siguiendo: ${chips}</div>
+    <div class="placeholder">
+      <div class="ph-icon">🔍</div>
+      <div class="ph-title">Sin partidos próximos</div>
+      <div class="ph-body">No se encontraron partidos próximos para tus equipos en los próximos 7 días.</div>
+    </div>`;
+    return;
+  }
+  container.innerHTML = `<div class="fav-header">Siguiendo: ${chips}</div>` + evs.map(cardHTML).join('');
+  bindReminders(container);
+}
+
+// ═══════════════════════════════════════════════════
+//  SKELETONS
+// ═══════════════════════════════════════════════════
+function showSkeletons() {
+  const sk = `<div class="match-card" style="opacity:.5">
+    <div style="height:12px;width:55%;background:var(--bg2);border-radius:8px;margin-bottom:14px"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--bg2)"></div>
+      <div style="flex:1;height:12px;background:var(--bg2);border-radius:8px"></div>
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--bg2)"></div>
+    </div>
+    <div style="height:10px;width:70%;background:var(--bg2);border-radius:8px"></div>
+  </div>`;
+  document.getElementById('list-hoy').innerHTML = sk + sk + sk;
+}
+
+// ═══════════════════════════════════════════════════
+//  REMINDERS
+// ═══════════════════════════════════════════════════
+function bindReminders(root) {
+  root.querySelectorAll('.remind-btn').forEach(btn => {
+    btn.addEventListener('click', () => toggleReminder(btn.dataset.eid, btn.dataset.home, btn.dataset.away, btn));
+  });
+}
+
+async function toggleReminder(eid, home, away, btn) {
+  if (reminders[eid]) {
+    delete reminders[eid];
+    localStorage.setItem('sc_reminders', JSON.stringify(reminders));
+    toast('🔕 Recordatorio eliminado');
+    if (btn) { btn.classList.remove('on'); btn.textContent = '🔕 Recordar'; }
+    return;
+  }
+
+  let perm = Notification.permission;
+  if (perm === 'default') perm = await Notification.requestPermission();
+  if (perm !== 'granted') { toast('⚠️ Activa las notificaciones del navegador'); return; }
+
+  const ev = allEvents.find(e => e.id === eid);
+  reminders[eid] = {
+    home, away, iso: ev ? ev._utcDate.toISOString() : null,
+    done30: false, doneStart: false
+  };
+  localStorage.setItem('sc_reminders', JSON.stringify(reminders));
+  toast(`🔔 Te avisaremos 30 min antes de ${home} vs ${away}`);
+  scheduleAllNotifications();
+  if (btn) { btn.classList.add('on'); btn.innerHTML = '🔔 Recordando'; }
+}
+
+function scheduleAllNotifications() {
+  const now = Date.now();
+  Object.entries(reminders).forEach(([eid, r]) => {
+    if (!r.iso) return;
+    const mt = new Date(r.iso).getTime();
+    const t30 = mt - 30 * 60 * 1000;
+
+    if (!r.done30 && t30 > now && t30 - now < 24 * 3600 * 1000) {
+      setTimeout(() => {
+        if (Notification.permission === 'granted')
+          new Notification('⏰ Partido en 30 minutos', { body: `${r.home} vs ${r.away}` });
+        reminders[eid].done30 = true;
+        localStorage.setItem('sc_reminders', JSON.stringify(reminders));
+      }, t30 - now);
+    }
+    if (!r.doneStart && mt > now && mt - now < 24 * 3600 * 1000) {
+      setTimeout(() => {
+        if (Notification.permission === 'granted')
+          new Notification('⚽ ¡Comienza ahora!', { body: `${r.home} vs ${r.away} — ¡Está empezando!` });
+        reminders[eid].doneStart = true;
+        localStorage.setItem('sc_reminders', JSON.stringify(reminders));
+      }, mt - now);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════
+document.getElementById('tab-bar').querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+    btn.classList.add('on');
+    document.getElementById(`page-${activeTab}`).classList.add('on');
+    if (activeTab === 'semana') renderSemana();
+    if (activeTab === 'favs')   renderFavs();
+  });
+});
+
+// ═══════════════════════════════════════════════════
+//  FAVORITES MODAL
+// ═══════════════════════════════════════════════════
+const overlay = document.getElementById('fav-overlay');
+document.getElementById('fav-open-btn').addEventListener('click', openFavModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeFavModal(); });
+document.getElementById('save-favs-btn').addEventListener('click', saveFavs);
+
+function openFavModal() {
+  tmpFavs = [...favoriteTeams];
+  buildTeamsGrid();
+  overlay.classList.add('show');
+}
+function closeFavModal() { overlay.classList.remove('show'); }
+
+function buildTeamsGrid() {
+  const container = document.getElementById('teams-container');
+  container.innerHTML = '';
+  Object.entries(POPULAR_TEAMS).forEach(([section, teams]) => {
+    const sec = document.createElement('div');
+    sec.innerHTML = `<div class="modal-section-title">${section}</div>`;
+    const grid = document.createElement('div');
+    grid.className = 'teams-grid';
+    teams.forEach(team => {
+      const isOn = tmpFavs.includes(team.name);
+      const tile = document.createElement('div');
+      tile.className = 'team-tile' + (isOn ? ' on' : '');
+      tile.innerHTML = `
+        <div class="tile-emblem">${team.emoji}</div>
+        <div class="tile-name">${team.name}</div>
+        <div class="tile-league">${section}</div>
+        ${isOn ? '<div class="tile-check">✓</div>' : ''}`;
+      tile.addEventListener('click', () => {
+        const idx = tmpFavs.indexOf(team.name);
+        if (idx >= 0) {
+          tmpFavs.splice(idx, 1);
+          tile.classList.remove('on');
+          tile.querySelector('.tile-check')?.remove();
+        } else {
+          tmpFavs.push(team.name);
+          tile.classList.add('on');
+          const chk = document.createElement('div');
+          chk.className = 'tile-check'; chk.textContent = '✓';
+          tile.appendChild(chk);
+        }
+      });
+      grid.appendChild(tile);
+    });
+    sec.appendChild(grid);
+    container.appendChild(sec);
+  });
+}
+
+function saveFavs() {
+  favoriteTeams = [...tmpFavs];
+  localStorage.setItem('sc_favorites', JSON.stringify(favoriteTeams));
+  closeFavModal();
+  const n = favoriteTeams.length;
+  toast(`⭐ ${n} equipo${n !== 1 ? 's' : ''} guardado${n !== 1 ? 's' : ''}`);
+  renderFavs();
+}
+
+// ═══════════════════════════════════════════════════
+//  HEADER DATE
+// ═══════════════════════════════════════════════════
+function setHeaderDate() {
+  const d = chileNow();
+  const s = d.toLocaleDateString('es-CL', {
+    timeZone:'America/Santiago', weekday:'long', day:'numeric', month:'long'
+  });
+  document.getElementById('current-date').textContent = s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+setHeaderDate();
+buildPills();
+loadEvents();
+
+// Auto-refresh cada 5 minutos — sin Claude, sin costo
+setInterval(loadEvents, 5 * 60 * 1000);
+// Re-render live status cada 60 segundos
+setInterval(() => { if (allEvents.length) renderAll(); }, 60 * 1000);
+</script>
+</body>
+</html>
