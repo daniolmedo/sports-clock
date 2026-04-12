@@ -9,7 +9,6 @@
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <title>Sports Clock</title>
 
-  <!-- Favicon: reloj deportivo -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23007AFF'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='white' stroke-width='1.5' opacity='.35'/%3E%3Cline x1='16' y1='16' x2='16' y2='7' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3Cline x1='16' y1='16' x2='22' y2='19' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2.2' fill='white'/%3E%3C/svg%3E">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -69,9 +68,8 @@
       min-height: 100vh;
     }
 
-    /* ── CONTENT AREA ────────────────────────────────── */
     .content-area {
-      padding-bottom: 100px; /* space for fixed tab bar */
+      padding-bottom: 100px;
     }
 
     /* ── HEADER ──────────────────────────────────────── */
@@ -182,16 +180,26 @@
     .league-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .league-lbl { font-size: 11px; font-weight: 700; color: var(--secondary-text); text-transform: uppercase; letter-spacing: .6px; }
 
+    .card-top-right { display: flex; align-items: center; gap: 6px; }
+
+    /* Standings button */
+    .standings-btn {
+      background: none; border: none; padding: 3px 7px;
+      border-radius: 8px; font-size: 13px; cursor: pointer;
+      color: var(--secondary-text); transition: background .15s; flex-shrink: 0;
+    }
+    .standings-btn:active { background: var(--bg2); transform: scale(.9); }
+
     .live-pill {
       display: flex; align-items: center; gap: 5px;
       background: var(--red); color: #fff; font-size: 10px; font-weight: 800;
-      padding: 4px 9px; border-radius: 100px; letter-spacing: .5px;
+      padding: 4px 9px; border-radius: 100px; letter-spacing: .5px; white-space: nowrap;
     }
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: blink 1.4s ease-in-out infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-    .time-pill { font-size: 13px; font-weight: 600; color: var(--secondary-text); background: var(--bg); padding: 5px 11px; border-radius: 100px; }
-    .fin-pill  { font-size: 12px; font-weight: 600; color: var(--tertiary-text); background: var(--bg); padding: 5px 11px; border-radius: 100px; }
+    .time-pill { font-size: 13px; font-weight: 600; color: var(--secondary-text); background: var(--bg); padding: 5px 11px; border-radius: 100px; white-space: nowrap; }
+    .fin-pill  { font-size: 12px; font-weight: 600; color: var(--tertiary-text); background: var(--bg); padding: 5px 11px; border-radius: 100px; white-space: nowrap; }
 
     .teams-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .team-col  { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
@@ -204,6 +212,7 @@
 
     .center-col { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 10px; flex-shrink: 0; }
     .score-txt  { font-size: 30px; font-weight: 800; letter-spacing: -1.5px; }
+    .score-txt.live { color: var(--red); }
     .vs-txt     { font-size: 12px; font-weight: 700; color: var(--tertiary-text); letter-spacing: 1px; }
     .day-small  { font-size: 10px; color: var(--tertiary-text); font-weight: 500; text-align: center; }
 
@@ -351,6 +360,38 @@
     }
     .league-pin-btn.on { background: var(--blue-soft); border-color: var(--blue); }
 
+    /* ── STANDINGS TABLE ─────────────────────────────── */
+    .standings-group-title {
+      font-size: 11px; font-weight: 700; color: var(--secondary-text);
+      text-transform: uppercase; letter-spacing: .7px;
+      padding: 16px 0 8px; margin-top: 4px;
+    }
+    .standings-group-title:first-child { padding-top: 0; }
+    .st-table {
+      width: 100%; border-collapse: collapse;
+    }
+    .st-table th {
+      font-size: 10px; font-weight: 700; color: var(--secondary-text);
+      text-transform: uppercase; letter-spacing: .5px;
+      padding: 6px 4px; text-align: center;
+      border-bottom: 1px solid var(--separator);
+    }
+    .st-table th.st-team-col { text-align: left; padding-left: 0; min-width: 110px; }
+    .st-table td {
+      padding: 9px 4px; text-align: center;
+      border-bottom: 1px solid var(--separator);
+      font-size: 12px; color: var(--secondary-text);
+    }
+    .st-table td.st-team-col { text-align: left; padding-left: 0; }
+    .st-table tr.st-highlight td { background: var(--blue-soft); color: var(--primary-text); }
+    .st-table tr.st-highlight td:first-child { border-radius: 8px 0 0 8px; }
+    .st-table tr.st-highlight td:last-child  { border-radius: 0 8px 8px 0; }
+    .st-team-cell { display: flex; align-items: center; gap: 8px; }
+    .st-team-logo { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+    .st-team-name { font-weight: 600; color: var(--primary-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; font-size: 13px; }
+    .st-rank { font-weight: 700; color: var(--secondary-text); width: 24px; text-align: center; }
+    .st-pts  { font-weight: 700; color: var(--blue); }
+
     /* ── DESKTOP LAYOUT ──────────────────────────────── */
     @media (min-width: 768px) {
       body { height: 100vh; overflow: hidden; }
@@ -360,7 +401,6 @@
         height: 100vh;
       }
 
-      /* Sidebar: fixed left column */
       .sidebar {
         width: var(--sidebar-w);
         flex-shrink: 0;
@@ -372,7 +412,6 @@
         overflow: hidden;
       }
 
-      /* Content area: right scrollable column */
       .content-area {
         flex: 1;
         height: 100vh;
@@ -380,7 +419,6 @@
         padding: 28px 32px 32px;
       }
 
-      /* Header: no sticky, no phone notch padding */
       .header {
         position: static;
         padding: 28px 20px 10px;
@@ -390,7 +428,6 @@
       .app-name { font-size: 26px; }
       .app-date  { font-size: 12px; }
 
-      /* Pills: vertical list in sidebar */
       .pills-wrap {
         flex-direction: column;
         align-items: stretch;
@@ -428,7 +465,6 @@
         margin-right: 0;
       }
 
-      /* Tab bar: static at bottom of sidebar */
       .tab-bar {
         position: static;
         transform: none;
@@ -452,17 +488,13 @@
       .tab-label { font-size: 13px; letter-spacing: 0; }
       .tab-icon  { font-size: 20px; }
 
-      /* Pages: no side padding (content-area handles it) */
       .page { padding: 0; }
-
-      /* Section title on desktop: slightly smaller */
       .section-title { font-size: 20px; }
 
-      /* Overlay: centered modal on desktop */
       .overlay { align-items: center; justify-content: center; }
       .sheet {
         border-radius: 24px;
-        max-width: 480px;
+        max-width: 520px;
         transform: scale(.95) translateY(0);
       }
       .overlay.show .sheet { transform: scale(1) translateY(0); }
@@ -539,7 +571,7 @@
     </main>
   </div>
 
-  <!-- TOAST (fuera del layout para z-index correcto) -->
+  <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
   <!-- MODAL: EQUIPOS FAVORITOS -->
@@ -602,49 +634,98 @@
     </div>
   </div>
 
+  <!-- MODAL: TABLA DE POSICIONES -->
+  <div class="overlay" id="standings-overlay">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title" id="standings-title">Tabla de posiciones</div>
+      <div class="sheet-sub" id="standings-sub"></div>
+      <div id="standings-content">
+        <div class="loading-wrap"><div class="spinner"></div><span>Cargando tabla…</span></div>
+      </div>
+      <button class="cal-cancel" id="standings-close">Cerrar</button>
+    </div>
+  </div>
+
 <script>
 // ═══════════════════════════════════════════════════
-//  LIGAS — ESPN public API (no key, CORS enabled)
+//  LIGAS — ESPN public API (sin key, CORS habilitado)
+//  sport: ruta del deporte en la ESPN API
+//  slug:  identificador de liga/competición
 // ═══════════════════════════════════════════════════
 const LEAGUES = [
-  { id:'ucl',   slug:'UEFA.CHAMPIONS',        name:'Champions',  full:'Champions League',     emoji:'🏆', color:'#1A3A6B', channels:['Paramount+','ESPN']     },
-  { id:'laliga',slug:'esp.1',                 name:'La Liga',    full:'La Liga España',        emoji:'🇪🇸', color:'#EE3B2F', channels:['ESPN','Disney+']        },
-  { id:'arg',   slug:'arg.1',                 name:'Argentina',  full:'Primera Argentina',     emoji:'🇦🇷', color:'#74ACDF', channels:['Disney+','ESPN']        },
-  { id:'chi',   slug:'chi.1',                 name:'Chile',      full:'Primera Chile',         emoji:'🇨🇱', color:'#D52B1E', channels:['TNT Sports']            },
-  { id:'lib',   slug:'CONMEBOL.LIBERTADORES', name:'Libertad.',  full:'Copa Libertadores',     emoji:'🌎', color:'#B8860B', channels:['Disney+','Chilevisión'] },
-  { id:'pl',    slug:'eng.1',                 name:'Premier',    full:'Premier League',        emoji:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', color:'#3D195B', channels:['ESPN','Disney+']        },
+  // ⚽ FÚTBOL
+  { id:'ucl',   sport:'soccer',     slug:'UEFA.CHAMPIONS',        name:'Champions',    full:'Champions League',     emoji:'🏆', color:'#1A3A6B', channels:['Paramount+','ESPN'],       hasStandings:true  },
+  { id:'uel',   sport:'soccer',     slug:'UEFA.EUROPA',           name:'Europa Lg.',   full:'UEFA Europa League',   emoji:'🟠', color:'#FF6B00', channels:['Paramount+','ESPN'],       hasStandings:true  },
+  { id:'laliga',sport:'soccer',     slug:'esp.1',                 name:'La Liga',      full:'La Liga España',       emoji:'🇪🇸', color:'#EE3B2F', channels:['ESPN','Disney+'],          hasStandings:true  },
+  { id:'pl',    sport:'soccer',     slug:'eng.1',                 name:'Premier',      full:'Premier League',       emoji:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', color:'#3D195B', channels:['ESPN','Disney+'],          hasStandings:true  },
+  { id:'chi',   sport:'soccer',     slug:'chi.1',                 name:'Chile',        full:'Primera Chile',        emoji:'🇨🇱', color:'#D52B1E', channels:['TNT Sports'],              hasStandings:true  },
+  { id:'arg',   sport:'soccer',     slug:'arg.1',                 name:'Argentina',    full:'Primera Argentina',    emoji:'🇦🇷', color:'#74ACDF', channels:['Disney+','ESPN'],          hasStandings:true  },
+  { id:'lib',   sport:'soccer',     slug:'CONMEBOL.LIBERTADORES', name:'Libertad.',    full:'Copa Libertadores',    emoji:'🌎', color:'#B8860B', channels:['Disney+','Chilevisión'],  hasStandings:true  },
+  { id:'sud',   sport:'soccer',     slug:'CONMEBOL.SUDAMERICANA', name:'Sudamericana', full:'Copa Sudamericana',    emoji:'🌿', color:'#27AE60', channels:['Disney+','Chilevisión'],  hasStandings:true  },
+  // 🏀 BÁSQUETBOL
+  { id:'nba',   sport:'basketball', slug:'nba',                   name:'NBA',          full:'NBA',                  emoji:'🏀', color:'#C9082A', channels:['ESPN','NBA League Pass'],  hasStandings:true  },
+  // 🎾 TENIS
+  { id:'atp',   sport:'tennis',     slug:'atp.1',                 name:'ATP',          full:'ATP Tour',             emoji:'🎾', color:'#2ECC71', channels:['ESPN','Star+'],            hasStandings:false },
+  // 🏈 FÚTBOL AMERICANO
+  { id:'nfl',   sport:'football',   slug:'nfl',                   name:'NFL',          full:'NFL',                  emoji:'🏈', color:'#013369', channels:['ESPN','NFL Network'],      hasStandings:true  },
 ];
 
 const POPULAR_TEAMS = {
   'Primera Chile': [
-    { name:'Colo-Colo',      emoji:'⚫' }, { name:'U de Chile',     emoji:'🔵' },
-    { name:'U Española',     emoji:'🔴' }, { name:'Audax Italiano', emoji:'🟢' },
-    { name:'Palestino',      emoji:'🔴' }, { name:'Huachipato',     emoji:'⚙️' },
+    { name:'Colo-Colo',       emoji:'⚫' }, { name:'U de Chile',      emoji:'🔵' },
+    { name:'U Española',      emoji:'🔴' }, { name:'Audax Italiano',  emoji:'🟢' },
+    { name:'Palestino',       emoji:'🔴' }, { name:'Huachipato',      emoji:'⚙️' },
   ],
   'Copa Libertadores': [
-    { name:'Colo-Colo',      emoji:'⚫' }, { name:'Boca Juniors',   emoji:'💛' },
-    { name:'River Plate',    emoji:'🔴' }, { name:'Flamengo',       emoji:'🔴' },
-    { name:'Palmeiras',      emoji:'🟢' }, { name:'Nacional',       emoji:'🔵' },
+    { name:'Colo-Colo',       emoji:'⚫' }, { name:'Boca Juniors',    emoji:'💛' },
+    { name:'River Plate',     emoji:'🔴' }, { name:'Flamengo',        emoji:'🔴' },
+    { name:'Palmeiras',       emoji:'🟢' }, { name:'Nacional',        emoji:'🔵' },
+  ],
+  'Copa Sudamericana': [
+    { name:'U de Chile',      emoji:'🔵' }, { name:'Colo-Colo',       emoji:'⚫' },
+    { name:'River Plate',     emoji:'🔴' }, { name:'Santos',          emoji:'⚫' },
+    { name:'Independiente',   emoji:'🔴' }, { name:'LDU Quito',       emoji:'⚪' },
   ],
   'La Liga': [
-    { name:'Real Madrid',    emoji:'⚪' }, { name:'Barcelona',      emoji:'🔵' },
-    { name:'Atlético Madrid',emoji:'🔴' }, { name:'Athletic Club',  emoji:'🔴' },
-    { name:'Real Betis',     emoji:'🟢' }, { name:'Sevilla',        emoji:'⚪' },
+    { name:'Real Madrid',     emoji:'⚪' }, { name:'Barcelona',       emoji:'🔵' },
+    { name:'Atlético Madrid', emoji:'🔴' }, { name:'Athletic Club',   emoji:'🔴' },
+    { name:'Real Betis',      emoji:'🟢' }, { name:'Sevilla',         emoji:'⚪' },
   ],
   'Primera Argentina': [
-    { name:'Boca Juniors',   emoji:'💛' }, { name:'River Plate',    emoji:'🔴' },
-    { name:'Racing Club',    emoji:'💙' }, { name:'Independiente',  emoji:'🔴' },
-    { name:'San Lorenzo',    emoji:'🔵' }, { name:'Huracán',        emoji:'⚽' },
+    { name:'Boca Juniors',    emoji:'💛' }, { name:'River Plate',     emoji:'🔴' },
+    { name:'Racing Club',     emoji:'💙' }, { name:'Independiente',   emoji:'🔴' },
+    { name:'San Lorenzo',     emoji:'🔵' }, { name:'Huracán',         emoji:'⚽' },
   ],
   'Champions League': [
-    { name:'Real Madrid',    emoji:'⚪' }, { name:'Manchester City',emoji:'💙' },
-    { name:'Bayern Munich',  emoji:'🔴' }, { name:'PSG',            emoji:'🔵' },
-    { name:'Arsenal',        emoji:'🔴' }, { name:'Inter',          emoji:'🖤' },
+    { name:'Real Madrid',     emoji:'⚪' }, { name:'Manchester City', emoji:'💙' },
+    { name:'Bayern Munich',   emoji:'🔴' }, { name:'PSG',             emoji:'🔵' },
+    { name:'Arsenal',         emoji:'🔴' }, { name:'Inter',           emoji:'🖤' },
   ],
   'Premier League': [
-    { name:'Arsenal',        emoji:'🔴' }, { name:'Manchester City',emoji:'💙' },
-    { name:'Liverpool',      emoji:'❤️' }, { name:'Chelsea',        emoji:'🔵' },
-    { name:'Man United',     emoji:'🔴' }, { name:'Tottenham',      emoji:'⚪' },
+    { name:'Arsenal',         emoji:'🔴' }, { name:'Manchester City', emoji:'💙' },
+    { name:'Liverpool',       emoji:'❤️'  }, { name:'Chelsea',         emoji:'🔵' },
+    { name:'Man United',      emoji:'🔴' }, { name:'Tottenham',       emoji:'⚪' },
+  ],
+  'UEFA Europa League': [
+    { name:'Manchester United',emoji:'🔴'}, { name:'Roma',            emoji:'🔴' },
+    { name:'Lazio',           emoji:'🔵' }, { name:'Sevilla',         emoji:'⚪' },
+    { name:'Ajax',            emoji:'🔴' }, { name:'Bayer Leverkusen',emoji:'🔴' },
+  ],
+  'NBA': [
+    { name:'Lakers',          emoji:'💛' }, { name:'Warriors',        emoji:'💙' },
+    { name:'Heat',            emoji:'🔴' }, { name:'Bulls',           emoji:'🔴' },
+    { name:'Celtics',         emoji:'🍀' }, { name:'Nuggets',         emoji:'🟡' },
+  ],
+  'ATP Tour': [
+    { name:'Tabilo',          emoji:'🇨🇱' }, { name:'Alcaraz',         emoji:'🇪🇸' },
+    { name:'Djokovic',        emoji:'🇷🇸' }, { name:'Sinner',          emoji:'🇮🇹' },
+    { name:'Zverev',          emoji:'🇩🇪' }, { name:'Medvedev',        emoji:'🇷🇺' },
+  ],
+  'NFL': [
+    { name:'Chiefs',          emoji:'🔴' }, { name:'Cowboys',         emoji:'⭐' },
+    { name:'Patriots',        emoji:'🔵' }, { name:'Packers',         emoji:'💚' },
+    { name:'49ers',           emoji:'🟠' }, { name:'Bills',           emoji:'🔵' },
   ],
 };
 
@@ -664,12 +745,11 @@ let tmpLeaguePins = [];
 let tmpLeagueOrder= [];
 let apiErrors     = [];
 
-// Pending calendar event (when user clicks "Recordar")
 let calPendingEid = null;
 let calPendingBtn = null;
 
 // ═══════════════════════════════════════════════════
-//  DATE HELPERS (all Chile TZ)
+//  DATE HELPERS (hora Chile)
 // ═══════════════════════════════════════════════════
 function chileNow() {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
@@ -701,42 +781,54 @@ function espnDateParam(dateStr) {
 }
 
 // ═══════════════════════════════════════════════════
-//  ESPN API
+//  ESPN API — Scoreboard
 // ═══════════════════════════════════════════════════
-async function fetchESPN(slug, dateStr) {
-  const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${espnDateParam(dateStr)}`;
+async function fetchESPN(sport, slug, dateStr) {
+  const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${slug}/scoreboard?dates=${espnDateParam(dateStr)}`;
   try {
     const r = await fetch(url);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     return j.events || [];
   } catch (e) {
-    console.warn(`ESPN fetch failed [${slug}/${dateStr}]:`, e.message);
+    console.warn(`ESPN fetch failed [${sport}/${slug}/${dateStr}]:`, e.message);
     return null;
   }
 }
 
 function parseESPNEvent(rawEvent, leagueId) {
-  const comp     = rawEvent.competitions?.[0];
-  const home     = comp?.competitors?.find(c => c.homeAway === 'home');
-  const away     = comp?.competitors?.find(c => c.homeAway === 'away');
-  const status   = comp?.status?.type;
-  const state    = status?.state;
+  const comp    = rawEvent.competitions?.[0];
+  // Soporte para deportes de equipo Y deportes individuales (tenis)
+  const home    = comp?.competitors?.find(c => c.homeAway === 'home') || comp?.competitors?.[0];
+  const away    = comp?.competitors?.find(c => c.homeAway === 'away') || comp?.competitors?.[1];
+  const status  = comp?.status?.type;
+  const state   = status?.state;       // 'pre' | 'in' | 'post'
   const finished = status?.completed;
-  const utcDate  = new Date(rawEvent.date);
+  const live    = state === 'in';
+  const utcDate = new Date(rawEvent.date);
+
+  // Nombre: equipos (soccer/NBA/NFL) o jugadores (tenis)
+  const homeName = home?.team?.displayName || home?.athlete?.displayName || '—';
+  const awayName = away?.team?.displayName || away?.athlete?.displayName || '—';
+  const homeLogo = home?.team?.logo        || home?.athlete?.headshot?.href || null;
+  const awayLogo = away?.team?.logo        || away?.athlete?.headshot?.href || null;
+
+  // Score: visible en vivo Y al finalizar
+  const homeScore = (finished || live) ? (home?.score ?? null) : null;
+  const awayScore = (finished || live) ? (away?.score ?? null) : null;
+
+  // Reloj y periodo para deportes con tiempo (NBA, NFL, etc.)
+  const clock  = live ? (comp?.status?.displayClock || null) : null;
+  const period = live ? (comp?.status?.period        || null) : null;
+
   return {
-    _lid:      leagueId,
-    _utcDate:  utcDate,
-    _dateStr:  toChileDateStr(utcDate),
-    id:        rawEvent.id,
-    home:      home?.team?.displayName || '—',
-    away:      away?.team?.displayName || '—',
-    homeLogo:  home?.team?.logo || null,
-    awayLogo:  away?.team?.logo || null,
-    homeScore: finished ? (home?.score ?? null) : null,
-    awayScore: finished ? (away?.score ?? null) : null,
-    state,
-    finished,
+    _lid: leagueId, _utcDate: utcDate, _dateStr: toChileDateStr(utcDate),
+    id: rawEvent.id,
+    home: homeName, away: awayName,
+    homeLogo, awayLogo,
+    homeScore, awayScore,
+    clock, period,
+    state, finished,
   };
 }
 
@@ -751,7 +843,7 @@ async function loadEvents() {
   });
   const fetches = LEAGUES.flatMap(league =>
     dates.map(dateStr =>
-      fetchESPN(league.slug, dateStr).then(rawEvents => {
+      fetchESPN(league.sport, league.slug, dateStr).then(rawEvents => {
         if (rawEvents === null) { apiErrors.push(league.id); return []; }
         return rawEvents.map(e => parseESPNEvent(e, league.id));
       })
@@ -801,7 +893,7 @@ function eventsForDay(dayStr) {
 //  RENDER: PILLS
 // ═══════════════════════════════════════════════════
 function buildPills() {
-  const track = document.getElementById('pills-track');
+  const track  = document.getElementById('pills-track');
   const sorted = getSortedLeagues();
   track.innerHTML =
     `<button class="pill on" data-lid="all">Todos</button>` +
@@ -817,7 +909,6 @@ function buildPills() {
       renderAll();
     });
   });
-  // Keep active pill highlighted correctly
   const active = track.querySelector(`[data-lid="${activeLeague}"]`);
   if (active) {
     track.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
@@ -845,6 +936,7 @@ function cardHTML(ev) {
   const fav      = isFavMatch(ev);
   const reminded = !!reminders[ev.id];
 
+  // Logos de equipos / foto de jugadores
   const homeBadge = ev.homeLogo
     ? `<img src="${ev.homeLogo}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${lg.emoji}'))">`
     : lg.emoji;
@@ -852,16 +944,39 @@ function cardHTML(ev) {
     ? `<img src="${ev.awayLogo}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${lg.emoji}'))">`
     : lg.emoji;
 
+  // Pill de estado: EN VIVO (con reloj si aplica) | Finalizado | hora
+  let clockDisplay = '';
+  if (live && ev.clock) {
+    const sport = lg.sport;
+    if (sport === 'soccer') {
+      clockDisplay = ` · ${ev.clock}`;
+    } else if (ev.period) {
+      clockDisplay = ` · ${ev.clock} P${ev.period}`;
+    } else {
+      clockDisplay = ` · ${ev.clock}`;
+    }
+  }
   const timePill = live
-    ? `<span class="live-pill"><span class="live-dot"></span>EN VIVO</span>`
+    ? `<span class="live-pill"><span class="live-dot"></span>EN VIVO${clockDisplay}</span>`
     : fin
       ? `<span class="fin-pill">Finalizado</span>`
       : `<span class="time-pill">🕐 ${fmtTime(ev._utcDate)}</span>`;
 
+  // Score central: visible en vivo (rojo) y al finalizar
   const centerBlock = hasScore
-    ? `<div class="score-txt">${ev.homeScore} – ${ev.awayScore}</div>`
+    ? `<div class="score-txt${live ? ' live' : ''}">${ev.homeScore} – ${ev.awayScore}</div>`
     : `<div class="vs-txt">VS</div><div class="day-small">${fmtDateShort(ev._utcDate)}</div>`;
 
+  // Botón 📊 para ligas con tabla de posiciones
+  const standingsBtn = lg.hasStandings
+    ? `<button class="standings-btn"
+         data-lid="${ev._lid}"
+         data-home="${ev.home.replace(/"/g,'&quot;')}"
+         data-away="${ev.away.replace(/"/g,'&quot;')}"
+         title="Ver tabla de posiciones">📊</button>`
+    : '';
+
+  // Footer derecho: Recordar (si no ha finalizado)
   const footerRight = fin
     ? ``
     : `<button class="remind-btn ${reminded ? 'on' : ''}"
@@ -879,7 +994,10 @@ function cardHTML(ev) {
           <span class="league-lbl">${lg.full}</span>
           ${fav ? '<span style="font-size:13px;margin-left:2px">⭐</span>' : ''}
         </div>
-        ${timePill}
+        <div class="card-top-right">
+          ${standingsBtn}
+          ${timePill}
+        </div>
       </div>
       <div class="teams-row">
         <div class="team-col">
@@ -900,6 +1018,25 @@ function cardHTML(ev) {
         ${footerRight}
       </div>
     </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  BIND: Reminders + Standings buttons
+// ═══════════════════════════════════════════════════
+function bindCards(root) {
+  // Recordatorios
+  root.querySelectorAll('.remind-btn').forEach(btn => {
+    btn.addEventListener('click', () =>
+      toggleReminder(btn.dataset.eid, btn.dataset.home, btn.dataset.away, btn)
+    );
+  });
+  // Botón tabla de posiciones
+  root.querySelectorAll('.standings-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openStandings(btn.dataset.lid, btn.dataset.home, btn.dataset.away);
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════════
@@ -932,7 +1069,7 @@ function renderHoy() {
   } else {
     list.innerHTML = evs.map(cardHTML).join('');
   }
-  bindReminders(list);
+  bindCards(list);
 }
 
 function buildDayStrip() {
@@ -979,7 +1116,7 @@ function renderSemanaDay() {
   } else {
     list.innerHTML = evs.map(cardHTML).join('');
   }
-  bindReminders(list);
+  bindCards(list);
 }
 
 function renderFavs() {
@@ -992,7 +1129,7 @@ function renderFavs() {
     </div>`;
     return;
   }
-  const evs  = allEvents.filter(isFavMatch);
+  const evs   = allEvents.filter(isFavMatch);
   const chips = favoriteTeams.map(t => `<span class="fav-chip">${t}</span>`).join('');
   if (evs.length === 0) {
     container.innerHTML = `<div class="fav-header">Siguiendo: ${chips}</div>
@@ -1004,7 +1141,7 @@ function renderFavs() {
     return;
   }
   container.innerHTML = `<div class="fav-header">Siguiendo: ${chips}</div>` + evs.map(cardHTML).join('');
-  bindReminders(container);
+  bindCards(container);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1021,6 +1158,149 @@ function showSkeletons() {
     <div style="height:10px;width:70%;background:var(--bg2);border-radius:8px"></div>
   </div>`;
   document.getElementById('list-hoy').innerHTML = sk + sk + sk;
+}
+
+// ═══════════════════════════════════════════════════
+//  STANDINGS — Tabla de posiciones
+// ═══════════════════════════════════════════════════
+const standingsOverlay = document.getElementById('standings-overlay');
+document.getElementById('standings-close').addEventListener('click', () => standingsOverlay.classList.remove('show'));
+standingsOverlay.addEventListener('click', e => { if (e.target === standingsOverlay) standingsOverlay.classList.remove('show'); });
+
+function getStatValue(stats, name) {
+  const s = stats.find(s => s.name === name);
+  return s != null ? s.value : null;
+}
+
+// Extrae entradas recursivamente (maneja ligas y torneos con grupos/conferencias)
+function extractStandingsGroups(data) {
+  // Si tiene children (conferencias NBA/NFL, grupos UCL, etc.)
+  if (data.children?.length) {
+    return data.children.map(child => ({
+      name: child.name || child.abbreviation || '',
+      entries: child.standings?.entries || [],
+    })).filter(g => g.entries.length > 0);
+  }
+  // Liga simple (La Liga, Premier, etc.)
+  const entries = data.standings?.entries || [];
+  if (entries.length) return [{ name: '', entries }];
+  return [];
+}
+
+function buildStandingsTable(groups, lg, highlightTeams) {
+  const sport = lg.sport;
+
+  // Columnas según deporte
+  const cols = sport === 'soccer'
+    ? [
+        { key:'gamesPlayed',       label:'PJ' },
+        { key:'wins',              label:'G'  },
+        { key:'ties',              label:'E'  },
+        { key:'losses',            label:'P'  },
+        { key:'pointDifferential', label:'DG', signed:true },
+        { key:'points',            label:'Pts', bold:true   },
+      ]
+    : sport === 'basketball'
+    ? [
+        { key:'wins',        label:'G'  },
+        { key:'losses',      label:'P'  },
+        { key:'winPercent',  label:'%',  pct:true, bold:true },
+      ]
+    : sport === 'football'
+    ? [
+        { key:'wins',        label:'G'  },
+        { key:'losses',      label:'P'  },
+        { key:'ties',        label:'E'  },
+        { key:'winPercent',  label:'%',  pct:true, bold:true },
+      ]
+    : [
+        { key:'wins',        label:'G'  },
+        { key:'losses',      label:'P'  },
+      ];
+
+  let html = '';
+
+  groups.forEach(group => {
+    if (group.name) {
+      html += `<div class="standings-group-title">${group.name}</div>`;
+    }
+    html += `<table class="st-table">
+      <thead><tr>
+        <th style="width:28px">#</th>
+        <th class="st-team-col">Equipo</th>
+        ${cols.map(c => `<th>${c.label}</th>`).join('')}
+      </tr></thead>
+      <tbody>`;
+
+    group.entries.forEach((entry, idx) => {
+      const stats   = entry.stats || [];
+      const rankVal = getStatValue(stats, 'rank');
+      const rank    = rankVal != null ? rankVal : idx + 1;
+      const name    = entry.team?.shortDisplayName || entry.team?.displayName || '—';
+      const logo    = entry.team?.logo || '';
+
+      const isHL = highlightTeams?.some(t =>
+        name.toLowerCase().includes(t.toLowerCase()) ||
+        t.toLowerCase().includes(name.toLowerCase())
+      );
+
+      const cells = cols.map(c => {
+        let val = getStatValue(stats, c.key);
+        if (val == null) val = '—';
+        else if (c.pct)    val = Math.round(val * 100) + '%';
+        else if (c.signed && val > 0) val = '+' + val;
+        const bold = c.bold ? ' class="st-pts"' : '';
+        return `<td${bold}>${val}</td>`;
+      }).join('');
+
+      html += `<tr class="${isHL ? 'st-highlight' : ''}">
+        <td class="st-rank">${rank}</td>
+        <td class="st-team-col">
+          <div class="st-team-cell">
+            ${logo ? `<img src="${logo}" alt="" class="st-team-logo" onerror="this.style.display='none'">` : ''}
+            <span class="st-team-name">${name}</span>
+          </div>
+        </td>
+        ${cells}
+      </tr>`;
+    });
+
+    html += `</tbody></table>`;
+  });
+
+  return html || `<div class="placeholder"><div class="ph-icon">📊</div><div class="ph-title">Sin datos</div><div class="ph-body">No hay tabla disponible para esta competición.</div></div>`;
+}
+
+async function openStandings(lid, home, away) {
+  const lg = getLeague(lid);
+  if (!lg.hasStandings) return;
+
+  document.getElementById('standings-title').textContent = `${lg.emoji} ${lg.full}`;
+  document.getElementById('standings-sub').textContent   = 'Tabla de posiciones';
+  document.getElementById('standings-content').innerHTML =
+    `<div class="loading-wrap"><div class="spinner"></div><span>Cargando tabla…</span></div>`;
+  standingsOverlay.classList.add('show');
+
+  try {
+    // Nota: standings usa /apis/v2/ (distinto al scoreboard que usa /apis/site/v2/)
+    const url = `https://site.api.espn.com/apis/v2/sports/${lg.sport}/${lg.slug}/standings`;
+    const r   = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j   = await r.json();
+
+    const groups = extractStandingsGroups(j);
+    if (!groups.length) throw new Error('No data');
+
+    document.getElementById('standings-content').innerHTML =
+      buildStandingsTable(groups, lg, [home, away]);
+  } catch (e) {
+    document.getElementById('standings-content').innerHTML = `
+      <div class="placeholder">
+        <div class="ph-icon">📊</div>
+        <div class="ph-title">Sin tabla disponible</div>
+        <div class="ph-body">Esta competición no tiene tabla de posiciones disponible en este momento.</div>
+      </div>`;
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1088,16 +1368,7 @@ function downloadICS(ev) {
 // ═══════════════════════════════════════════════════
 //  REMINDERS
 // ═══════════════════════════════════════════════════
-function bindReminders(root) {
-  root.querySelectorAll('.remind-btn').forEach(btn => {
-    btn.addEventListener('click', () =>
-      toggleReminder(btn.dataset.eid, btn.dataset.home, btn.dataset.away, btn)
-    );
-  });
-}
-
 function toggleReminder(eid, home, away, btn) {
-  // If already reminded: toggle off
   if (reminders[eid]) {
     delete reminders[eid];
     localStorage.setItem('sc_reminders', JSON.stringify(reminders));
@@ -1106,7 +1377,6 @@ function toggleReminder(eid, home, away, btn) {
     return;
   }
 
-  // Store pending state and open calendar modal
   calPendingEid = eid;
   calPendingBtn = btn;
 
@@ -1141,7 +1411,6 @@ function markReminded(eid) {
   calPendingBtn = null;
 }
 
-// Calendar modal button bindings
 document.getElementById('cal-google').addEventListener('click', () => {
   if (!calPendingEid) return;
   const ev = getCalendarEvent(calPendingEid);
@@ -1165,15 +1434,13 @@ document.getElementById('cal-outlook').addEventListener('click', () => {
 
 document.getElementById('cal-cancel').addEventListener('click', () => {
   document.getElementById('cal-overlay').classList.remove('show');
-  calPendingEid = null;
-  calPendingBtn = null;
+  calPendingEid = null; calPendingBtn = null;
 });
 
 document.getElementById('cal-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('cal-overlay')) {
     document.getElementById('cal-overlay').classList.remove('show');
-    calPendingEid = null;
-    calPendingBtn = null;
+    calPendingEid = null; calPendingBtn = null;
   }
 });
 
@@ -1311,8 +1578,8 @@ function buildLeagueList() {
   const list = document.getElementById('league-list');
   list.innerHTML = '';
 
-  tmpLeagueOrder.forEach((lid, idx) => {
-    const league  = LEAGUES.find(l => l.id === lid);
+  tmpLeagueOrder.forEach((lid) => {
+    const league   = LEAGUES.find(l => l.id === lid);
     if (!league) return;
     const isPinned = tmpLeaguePins.includes(lid);
 
@@ -1329,7 +1596,6 @@ function buildLeagueList() {
         ${isPinned ? '📌' : '☆'}
       </button>`;
 
-    // Pin toggle
     row.querySelector('.league-pin-btn').addEventListener('click', () => {
       const pinBtn = row.querySelector('.league-pin-btn');
       if (tmpLeaguePins.includes(lid)) {
@@ -1345,7 +1611,6 @@ function buildLeagueList() {
       }
     });
 
-    // Drag and drop
     row.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', lid);
       row.classList.add('dragging');
