@@ -50,6 +50,31 @@
         --shadow-lg:     0 8px 40px rgba(0,0,0,0.6);
       }
     }
+    /* ── MANUAL DARK / LIGHT OVERRIDE ───────────────── */
+    [data-theme="dark"] {
+      --bg:            #000;
+      --bg2:           #1C1C1E;
+      --card:          #1C1C1E;
+      --primary-text:  #FFF;
+      --secondary-text:#8E8E93;
+      --tertiary-text: #48484A;
+      --separator:     rgba(84,84,88,0.36);
+      --shadow-sm:     0 1px 8px rgba(0,0,0,0.3);
+      --shadow:        0 4px 20px rgba(0,0,0,0.4);
+      --shadow-lg:     0 8px 40px rgba(0,0,0,0.6);
+    }
+    [data-theme="light"] {
+      --bg:            #F2F2F7;
+      --bg2:           #E5E5EA;
+      --card:          #FFFFFF;
+      --primary-text:  #1C1C1E;
+      --secondary-text:#8E8E93;
+      --tertiary-text: #C7C7CC;
+      --separator:     rgba(60,60,67,0.12);
+      --shadow-sm:     0 1px 8px rgba(0,0,0,0.07);
+      --shadow:        0 4px 20px rgba(0,0,0,0.09);
+      --shadow-lg:     0 8px 40px rgba(0,0,0,0.16);
+    }
 
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html { -webkit-text-size-adjust:none; }
@@ -499,6 +524,90 @@
       }
       .overlay.show .sheet { transform: scale(1) translateY(0); }
     }
+
+    /* ── PILLS SPORT GROUP (sidebar) ─────────────────── */
+    .pill-sport-group { display: contents; } /* mobile: inline en flex horizontal */
+    .pill-sport-sub   { display: contents; }
+    .pill-sport-hdr {
+      flex-shrink: 0; padding: 6px 12px; border-radius: 100px; border: none;
+      background: var(--bg2); color: var(--secondary-text);
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;
+      transition: background .15s;
+    }
+    .pill-sport-hdr:active { background: var(--separator); }
+    .pill-sport-arrow { display: none; font-size: 10px; transition: transform .2s; }
+    /* Desktop: los grupos se muestran verticalmente con collapse */
+    @media (min-width: 768px) {
+      .pill-sport-group { display: block; margin-top: 2px; }
+      .pill-sport-sub   { display: flex; flex-direction: column; gap: 2px; padding-left: 6px; }
+      .pill-sport-sub.collapsed { display: none; }
+      .pill-sport-hdr {
+        display: flex; justify-content: space-between; align-items: center;
+        width: 100%; padding: 8px 14px; border-radius: 10px;
+        background: transparent; border: none;
+        font-size: 12px; font-weight: 700; color: var(--secondary-text);
+        cursor: pointer; margin-top: 2px; white-space: normal;
+      }
+      .pill-sport-hdr:hover { background: var(--bg2); }
+      .pill-sport-hdr.collapsed .pill-sport-arrow { transform: rotate(-90deg); }
+      .pill-sport-arrow { display: inline-block; }
+    }
+
+    /* ── SPORT GROUP COLLAPSE (content area) ─────────── */
+    .sport-group { margin-bottom: 4px; }
+    .sport-group-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 4px 8px; cursor: pointer; user-select: none;
+      border-bottom: 1px solid var(--separator); margin-bottom: 10px;
+    }
+    .sport-group-label { font-size: 14px; font-weight: 700; color: var(--secondary-text); }
+    .sport-group-arrow { font-size: 11px; color: var(--tertiary-text); transition: transform .2s; display: inline-block; }
+    .sport-group-header.collapsed .sport-group-arrow { transform: rotate(-90deg); }
+    .sport-group-body.collapsed { display: none; }
+
+    /* ── SHEET CLOSE BUTTON ───────────────────────────── */
+    .sheet { position: relative; }
+    .sheet-close-btn {
+      position: absolute; top: 16px; right: 16px;
+      background: var(--bg2); border: none; border-radius: 50%;
+      width: 36px; height: 36px; font-size: 18px; font-weight: 300; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--secondary-text); z-index: 10; transition: background .15s;
+      line-height: 1;
+    }
+    .sheet-close-btn:active { background: var(--separator); }
+
+    /* ── STATS BUTTON ─────────────────────────────────── */
+    .stats-btn {
+      background: none; border: none; padding: 3px 7px;
+      border-radius: 8px; font-size: 13px; cursor: pointer;
+      color: var(--secondary-text); transition: background .15s; flex-shrink: 0;
+    }
+    .stats-btn:active { background: var(--bg2); transform: scale(.9); }
+
+    /* ── LIVE TIMESTAMP ────────────────────────────────── */
+    .live-updated { font-size: 10px; color: var(--tertiary-text); text-align: center; margin-top: 3px; }
+
+    /* ── TEAM EMBLEM CLICKABLE ─────────────────────────── */
+    .team-emblem.has-standings { cursor: pointer; transition: transform .15s, box-shadow .15s; }
+    .team-emblem.has-standings:active { transform: scale(.88); box-shadow: 0 0 0 3px var(--blue); }
+
+    /* ── MATCH STATS BARS ─────────────────────────────── */
+    .stat-bar-row { margin-bottom: 14px; }
+    .stat-bar-label {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; font-weight: 600; margin-bottom: 5px; gap: 6px;
+    }
+    .stat-name { color: var(--secondary-text); text-align: center; flex: 1; font-size: 11px; }
+    .stat-val-home { color: var(--blue); width: 38px; text-align: left; }
+    .stat-val-away { color: var(--red); width: 38px; text-align: right; }
+    .stat-bar-track { height: 6px; background: var(--bg2); border-radius: 100px; position: relative; overflow: hidden; }
+    .stat-bar-home  { position: absolute; left: 0; top: 0; bottom: 0; background: var(--blue); border-radius: 100px; }
+    .stat-bar-away  { position: absolute; right: 0; top: 0; bottom: 0; background: var(--red); border-radius: 100px; }
+
+    /* ── API BANNER DARK ──────────────────────────────── */
+    [data-theme="dark"] .api-banner { background: #332700; color: #FFC107; border-color: #FFC107; }
   </style>
 </head>
 <body>
@@ -512,7 +621,10 @@
             <div class="app-name">Sports Clock 🏟️</div>
             <div class="app-date" id="current-date"></div>
           </div>
-          <button class="icon-btn" id="fav-open-btn" title="Equipos favoritos">⭐</button>
+          <div style="display:flex;gap:8px">
+            <button class="icon-btn" id="dark-toggle-btn" title="Modo oscuro">🌙</button>
+            <button class="icon-btn" id="fav-open-btn" title="Equipos favoritos">⭐</button>
+          </div>
         </div>
       </div>
 
@@ -577,6 +689,7 @@
   <!-- MODAL: EQUIPOS FAVORITOS -->
   <div class="overlay" id="fav-overlay">
     <div class="sheet">
+      <button class="sheet-close-btn" id="fav-close">✕</button>
       <div class="sheet-handle"></div>
       <div class="sheet-title">Mis equipos favoritos</div>
       <div class="sheet-sub">Selecciona los equipos que quieres seguir de cerca</div>
@@ -588,6 +701,7 @@
   <!-- MODAL: ORDENAR LIGAS -->
   <div class="overlay" id="league-overlay">
     <div class="sheet">
+      <button class="sheet-close-btn" id="league-close">✕</button>
       <div class="sheet-handle"></div>
       <div class="sheet-title">Personalizar ligas</div>
       <div class="sheet-sub">📌 Fija tus ligas favoritas · Arrastra para reordenar</div>
@@ -599,6 +713,7 @@
   <!-- MODAL: AGENDAR EN CALENDARIO -->
   <div class="overlay" id="cal-overlay">
     <div class="sheet">
+      <button class="sheet-close-btn" id="cal-close-x">✕</button>
       <div class="sheet-handle"></div>
       <div class="sheet-title" id="cal-sheet-title">Agendar partido</div>
       <div class="sheet-sub" id="cal-sheet-sub">Elige tu app de calendario</div>
@@ -637,6 +752,7 @@
   <!-- MODAL: TABLA DE POSICIONES -->
   <div class="overlay" id="standings-overlay">
     <div class="sheet">
+      <button class="sheet-close-btn" id="standings-close-x">✕</button>
       <div class="sheet-handle"></div>
       <div class="sheet-title" id="standings-title">Tabla de posiciones</div>
       <div class="sheet-sub" id="standings-sub"></div>
@@ -644,6 +760,19 @@
         <div class="loading-wrap"><div class="spinner"></div><span>Cargando tabla…</span></div>
       </div>
       <button class="cal-cancel" id="standings-close">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- MODAL: ESTADÍSTICAS DEL PARTIDO -->
+  <div class="overlay" id="stats-overlay">
+    <div class="sheet">
+      <button class="sheet-close-btn" id="stats-close">✕</button>
+      <div class="sheet-handle"></div>
+      <div class="sheet-title" id="stats-title">Estadísticas</div>
+      <div class="sheet-sub" id="stats-sub"></div>
+      <div id="stats-content">
+        <div class="loading-wrap"><div class="spinner"></div><span>Cargando estadísticas…</span></div>
+      </div>
     </div>
   </div>
 
@@ -730,20 +859,33 @@ const POPULAR_TEAMS = {
 };
 
 // ═══════════════════════════════════════════════════
+//  SPORT LABELS
+// ═══════════════════════════════════════════════════
+const SPORT_LABELS = {
+  soccer:     { emoji: '⚽', label: 'Fútbol' },
+  basketball: { emoji: '🏀', label: 'Básquetbol' },
+  tennis:     { emoji: '🎾', label: 'Tenis' },
+  football:   { emoji: '🏈', label: 'Fútbol Americano' },
+};
+
+// ═══════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════
-let allEvents     = [];
-let activeLeague  = 'all';
-let activeTab     = 'hoy';
-let selectedDay   = todayDateStr();
-let reminders     = JSON.parse(localStorage.getItem('sc_reminders')     || '{}');
-let favoriteTeams = JSON.parse(localStorage.getItem('sc_favorites')     || '[]');
-let leaguePins    = JSON.parse(localStorage.getItem('sc_league_pins')   || '[]');
-let leagueOrder   = JSON.parse(localStorage.getItem('sc_league_order')  || '[]');
-let tmpFavs       = [];
-let tmpLeaguePins = [];
-let tmpLeagueOrder= [];
-let apiErrors     = [];
+let allEvents       = [];
+let activeLeague    = 'all';
+let activeTab       = 'hoy';
+let selectedDay     = todayDateStr();
+let reminders       = JSON.parse(localStorage.getItem('sc_reminders')       || '{}');
+let favoriteTeams   = JSON.parse(localStorage.getItem('sc_favorites')       || '[]');
+let leaguePins      = JSON.parse(localStorage.getItem('sc_league_pins')     || '[]');
+let leagueOrder     = JSON.parse(localStorage.getItem('sc_league_order')    || '[]');
+let collapsedGroups     = JSON.parse(localStorage.getItem('sc_collapsed_groups')     || '{}');
+let collapsedSportPills = JSON.parse(localStorage.getItem('sc_collapsed_sport_pills') || '{}');
+let tmpFavs         = [];
+let tmpLeaguePins   = [];
+let tmpLeagueOrder  = [];
+let apiErrors       = [];
+let lastRefreshTime = null;
 
 let calPendingEid = null;
 let calPendingBtn = null;
@@ -854,6 +996,9 @@ async function loadEvents() {
     .flat()
     .filter((e, i, arr) => arr.findIndex(x => x.id === e.id) === i)
     .sort((a, b) => a._utcDate - b._utcDate);
+  lastRefreshTime = chileNow().toLocaleTimeString('es-CL', {
+    hour:'2-digit', minute:'2-digit', hour12: false, timeZone:'America/Santiago'
+  });
   renderAll();
   scheduleAllNotifications();
 }
@@ -890,18 +1035,54 @@ function eventsForDay(dayStr) {
 }
 
 // ═══════════════════════════════════════════════════
-//  RENDER: PILLS
+//  RENDER: PILLS (agrupados por deporte)
 // ═══════════════════════════════════════════════════
 function buildPills() {
-  const track  = document.getElementById('pills-track');
-  const sorted = getSortedLeagues();
-  track.innerHTML =
-    `<button class="pill on" data-lid="all">Todos</button>` +
-    sorted.map(l => {
-      const pin = leaguePins.includes(l.id);
-      return `<button class="pill${pin ? ' pinned' : ''}" data-lid="${l.id}">${pin ? '📌 ' : ''}${l.emoji} ${l.name}</button>`;
-    }).join('');
-  track.querySelectorAll('.pill').forEach(btn => {
+  const track = document.getElementById('pills-track');
+  const sportOrder = ['soccer', 'basketball', 'tennis', 'football'];
+  const allSorted  = getSortedLeagues();
+
+  // Agrupar ligas por deporte en el orden fijo
+  const sportGroups = {};
+  sportOrder.forEach(s => { sportGroups[s] = []; });
+  allSorted.forEach(l => {
+    if (sportGroups[l.sport]) sportGroups[l.sport].push(l);
+    else { sportGroups[l.sport] = [l]; }
+  });
+
+  let html = `<button class="pill${activeLeague === 'all' ? ' on' : ''}" data-lid="all">Todos</button>`;
+
+  Object.entries(sportGroups).forEach(([sport, leagues]) => {
+    if (!leagues.length) return;
+    const sl = SPORT_LABELS[sport] || { emoji: '🏅', label: sport };
+    const isCollapsed = collapsedSportPills[sport] ? 'collapsed' : '';
+    html += `<div class="pill-sport-group">
+      <button class="pill-sport-hdr ${isCollapsed}" data-sport="${sport}">
+        <span>${sl.emoji} ${sl.label}</span>
+        <span class="pill-sport-arrow">▾</span>
+      </button>
+      <div class="pill-sport-sub ${isCollapsed}">
+        ${leagues.map(l => {
+          const pin    = leaguePins.includes(l.id);
+          const active = activeLeague === l.id ? ' on' : '';
+          return `<button class="pill${active}${pin ? ' pinned' : ''}" data-lid="${l.id}">${pin ? '📌 ' : ''}${l.emoji} ${l.name}</button>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+
+  track.innerHTML = html;
+
+  // Todos
+  track.querySelector('[data-lid="all"]').addEventListener('click', () => {
+    activeLeague = 'all';
+    track.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
+    track.querySelector('[data-lid="all"]').classList.add('on');
+    renderAll();
+  });
+
+  // Liga individual
+  track.querySelectorAll('.pill[data-lid]:not([data-lid="all"])').forEach(btn => {
     btn.addEventListener('click', () => {
       activeLeague = btn.dataset.lid;
       track.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
@@ -909,10 +1090,25 @@ function buildPills() {
       renderAll();
     });
   });
-  const active = track.querySelector(`[data-lid="${activeLeague}"]`);
-  if (active) {
-    track.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
-    active.classList.add('on');
+
+  // Sport header — collapse/expand (desktop)
+  track.querySelectorAll('.pill-sport-hdr').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      const sport = hdr.dataset.sport;
+      const isNowCollapsed = hdr.classList.toggle('collapsed');
+      hdr.nextElementSibling.classList.toggle('collapsed', isNowCollapsed);
+      collapsedSportPills[sport] = isNowCollapsed ? 1 : 0;
+      localStorage.setItem('sc_collapsed_sport_pills', JSON.stringify(collapsedSportPills));
+    });
+  });
+
+  // Restaurar pill activo
+  if (activeLeague !== 'all') {
+    const activePill = track.querySelector(`[data-lid="${activeLeague}"]`);
+    if (activePill) {
+      track.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
+      activePill.classList.add('on');
+    }
   }
 }
 
@@ -967,13 +1163,27 @@ function cardHTML(ev) {
     ? `<div class="score-txt${live ? ' live' : ''}">${ev.homeScore} – ${ev.awayScore}</div>`
     : `<div class="vs-txt">VS</div><div class="day-small">${fmtDateShort(ev._utcDate)}</div>`;
 
-  // Botón 📊 para ligas con tabla de posiciones
+  // Botones: 📈 estadísticas del partido + 🏆 tabla de posiciones
+  const statsBtn = `<button class="stats-btn"
+       data-eid="${ev.id}"
+       title="Estadísticas del partido">📈</button>`;
   const standingsBtn = lg.hasStandings
     ? `<button class="standings-btn"
          data-lid="${ev._lid}"
          data-home="${ev.home.replace(/"/g,'&quot;')}"
          data-away="${ev.away.replace(/"/g,'&quot;')}"
-         title="Ver tabla de posiciones">📊</button>`
+         title="Ver tabla de posiciones">🏆</button>`
+    : '';
+
+  // Timestamp de última actualización (solo en partidos en vivo)
+  const liveUpdated = live && lastRefreshTime
+    ? `<div class="live-updated">↻ ${lastRefreshTime}</div>`
+    : '';
+
+  // Emblemas clickeables para ligas con tabla
+  const emblemClass = lg.hasStandings ? ' has-standings' : '';
+  const homeEmblemAttrs = lg.hasStandings
+    ? ` data-lid="${ev._lid}" data-home="${ev.home.replace(/"/g,'&quot;')}" data-away="${ev.away.replace(/"/g,'&quot;')}"`
     : '';
 
   // Footer derecho: Recordar (si no ha finalizado)
@@ -995,18 +1205,19 @@ function cardHTML(ev) {
           ${fav ? '<span style="font-size:13px;margin-left:2px">⭐</span>' : ''}
         </div>
         <div class="card-top-right">
+          ${statsBtn}
           ${standingsBtn}
           ${timePill}
         </div>
       </div>
       <div class="teams-row">
         <div class="team-col">
-          <div class="team-emblem">${homeBadge}</div>
+          <div class="team-emblem${emblemClass}"${homeEmblemAttrs}>${homeBadge}</div>
           <div class="team-name">${ev.home}</div>
         </div>
-        <div class="center-col">${centerBlock}</div>
+        <div class="center-col">${centerBlock}${liveUpdated}</div>
         <div class="team-col">
-          <div class="team-emblem">${awayBadge}</div>
+          <div class="team-emblem${emblemClass}"${homeEmblemAttrs}>${awayBadge}</div>
           <div class="team-name">${ev.away}</div>
         </div>
       </div>
@@ -1030,13 +1241,70 @@ function bindCards(root) {
       toggleReminder(btn.dataset.eid, btn.dataset.home, btn.dataset.away, btn)
     );
   });
-  // Botón tabla de posiciones
+  // Botón tabla de posiciones (🏆)
   root.querySelectorAll('.standings-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       openStandings(btn.dataset.lid, btn.dataset.home, btn.dataset.away);
     });
   });
+  // Botón estadísticas del partido (📈)
+  root.querySelectorAll('.stats-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openMatchStats(btn.dataset.eid);
+    });
+  });
+  // Logo del equipo → tabla de posiciones
+  root.querySelectorAll('.team-emblem.has-standings').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openStandings(el.dataset.lid, el.dataset.home, el.dataset.away);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: SPORT GROUPS
+// ═══════════════════════════════════════════════════
+function groupBySport(evs) {
+  const groups = {};
+  evs.forEach(ev => {
+    const sport = getLeague(ev._lid).sport;
+    if (!groups[sport]) groups[sport] = [];
+    groups[sport].push(ev);
+  });
+  return groups;
+}
+
+function renderGrouped(evs, container) {
+  const groups = groupBySport(evs);
+  let html = '';
+  Object.entries(groups).forEach(([sport, events]) => {
+    const sl = SPORT_LABELS[sport] || { emoji: '🏅', label: sport };
+    const isCollapsed = collapsedGroups[sport] ? 'collapsed' : '';
+    html += `
+      <div class="sport-group">
+        <div class="sport-group-header ${isCollapsed}" data-sport="${sport}">
+          <span class="sport-group-label">${sl.emoji} ${sl.label} <span style="font-weight:500;font-size:12px">(${events.length})</span></span>
+          <span class="sport-group-arrow">▼</span>
+        </div>
+        <div class="sport-group-body ${isCollapsed}">
+          ${events.map(cardHTML).join('')}
+        </div>
+      </div>`;
+  });
+  container.innerHTML = html;
+  container.querySelectorAll('.sport-group-header').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      const sport = hdr.dataset.sport;
+      const isNowCollapsed = hdr.classList.toggle('collapsed');
+      hdr.nextElementSibling.classList.toggle('collapsed', isNowCollapsed);
+      collapsedGroups[sport] = isNowCollapsed ? 1 : 0;
+      localStorage.setItem('sc_collapsed_groups', JSON.stringify(collapsedGroups));
+    });
+  });
+  bindCards(container);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1067,9 +1335,8 @@ function renderHoy() {
       <div class="ph-body">No hay partidos programados para hoy en las ligas seleccionadas. ¡Revisa la semana!</div>
     </div>`;
   } else {
-    list.innerHTML = evs.map(cardHTML).join('');
+    renderGrouped(evs, list);
   }
-  bindCards(list);
 }
 
 function buildDayStrip() {
@@ -1114,9 +1381,8 @@ function renderSemanaDay() {
       <div class="ph-body">No hay partidos programados para este día en las ligas seleccionadas.</div>
     </div>`;
   } else {
-    list.innerHTML = evs.map(cardHTML).join('');
+    renderGrouped(evs, list);
   }
-  bindCards(list);
 }
 
 function renderFavs() {
@@ -1140,8 +1406,10 @@ function renderFavs() {
     </div>`;
     return;
   }
-  container.innerHTML = `<div class="fav-header">Siguiendo: ${chips}</div>` + evs.map(cardHTML).join('');
-  bindCards(container);
+  container.innerHTML = `<div class="fav-header">Siguiendo: ${chips}</div>`;
+  const groupsWrap = document.createElement('div');
+  renderGrouped(evs, groupsWrap);
+  container.appendChild(groupsWrap);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1354,15 +1622,22 @@ function downloadICS(ev) {
     'END:VCALENDAR'
   ].join('\r\n');
 
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = `${ev.home}_vs_${ev.away}.ics`.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_.\-]/g,'');
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // iOS Safari no soporta Blob + createObjectURL + a.click() → usar data: URL
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) {
+    window.open('data:text/calendar;charset=utf-8,' + encodeURIComponent(ics));
+  } else {
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `${ev.home}_vs_${ev.away}.ics`.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_.\-]/g,'');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1652,6 +1927,130 @@ function saveLeagueOrder() {
 }
 
 // ═══════════════════════════════════════════════════
+//  MATCH STATS — Estadísticas del partido
+// ═══════════════════════════════════════════════════
+const statsOverlay = document.getElementById('stats-overlay');
+document.getElementById('stats-close').addEventListener('click', () => statsOverlay.classList.remove('show'));
+statsOverlay.addEventListener('click', e => { if (e.target === statsOverlay) statsOverlay.classList.remove('show'); });
+
+async function openMatchStats(eid) {
+  const ev = allEvents.find(e => e.id === eid);
+  if (!ev) return;
+  const lg = getLeague(ev._lid);
+
+  document.getElementById('stats-title').textContent = `${ev.home} vs ${ev.away}`;
+  document.getElementById('stats-sub').textContent   = `${lg.emoji} ${lg.full}`;
+  document.getElementById('stats-content').innerHTML =
+    `<div class="loading-wrap"><div class="spinner"></div><span>Cargando estadísticas…</span></div>`;
+  statsOverlay.classList.add('show');
+
+  try {
+    const url = `https://site.api.espn.com/apis/site/v2/sports/${lg.sport}/${lg.slug}/summary?event=${eid}`;
+    const r   = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j   = await r.json();
+
+    // Boxscore por equipo
+    const teamsData = j.boxscore?.teams;
+    if (!teamsData || teamsData.length < 2) throw new Error('No stats');
+
+    const homeTeam = teamsData.find(t => t.homeAway === 'home') || teamsData[0];
+    const awayTeam = teamsData.find(t => t.homeAway === 'away') || teamsData[1];
+
+    document.getElementById('stats-content').innerHTML =
+      buildMatchStatsHTML(homeTeam, awayTeam, ev);
+  } catch (e) {
+    document.getElementById('stats-content').innerHTML = `
+      <div class="placeholder">
+        <div class="ph-icon">📈</div>
+        <div class="ph-title">Sin estadísticas</div>
+        <div class="ph-body">Las estadísticas no están disponibles para este partido en este momento.</div>
+      </div>`;
+  }
+}
+
+function buildMatchStatsHTML(homeTeam, awayTeam, ev) {
+  const homeStats = homeTeam.statistics || [];
+  const awayStats = awayTeam.statistics || [];
+
+  if (!homeStats.length && !awayStats.length) {
+    return `<div class="placeholder"><div class="ph-icon">📈</div><div class="ph-title">Sin estadísticas</div><div class="ph-body">No hay estadísticas disponibles aún.</div></div>`;
+  }
+
+  // Header con nombres de equipos
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:0 4px">
+      <span style="font-size:13px;font-weight:800;color:var(--blue);flex:1">${ev.home}</span>
+      <span style="font-size:11px;font-weight:600;color:var(--secondary-text)">vs</span>
+      <span style="font-size:13px;font-weight:800;color:var(--red);flex:1;text-align:right">${ev.away}</span>
+    </div>`;
+
+  // Unir todas las stats por nombre
+  const allKeys = [...new Set([...homeStats.map(s => s.name), ...awayStats.map(s => s.name)])];
+
+  allKeys.forEach(key => {
+    const hs = homeStats.find(s => s.name === key);
+    const as = awayStats.find(s => s.name === key);
+    if (!hs && !as) return;
+    const hv    = hs?.displayValue ?? (hs?.value != null ? hs.value : '—');
+    const av    = as?.displayValue ?? (as?.value != null ? as.value : '—');
+    const label = hs?.label || as?.label || key;
+
+    // Intentar barra comparativa
+    const hn = parseFloat(String(hv).replace('%', '').replace(',',''));
+    const an = parseFloat(String(av).replace('%', '').replace(',',''));
+    const total = (!isNaN(hn) && !isNaN(an)) ? hn + an : 0;
+    const homePct = total > 0 ? Math.round((hn / total) * 100) : 50;
+    const awayPct = 100 - homePct;
+    const hasBar  = total > 0 && !isNaN(hn) && !isNaN(an);
+
+    html += `<div class="stat-bar-row">
+      <div class="stat-bar-label">
+        <span class="stat-val-home">${hv}</span>
+        <span class="stat-name">${label}</span>
+        <span class="stat-val-away">${av}</span>
+      </div>
+      ${hasBar ? `<div class="stat-bar-track">
+        <div class="stat-bar-home" style="width:${homePct}%"></div>
+        <div class="stat-bar-away" style="width:${awayPct}%"></div>
+      </div>` : ''}
+    </div>`;
+  });
+
+  return html;
+}
+
+// ═══════════════════════════════════════════════════
+//  DARK MODE TOGGLE
+// ═══════════════════════════════════════════════════
+let darkMode = localStorage.getItem('sc_darkmode') !== null
+  ? localStorage.getItem('sc_darkmode') === '1'
+  : window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+function applyTheme() {
+  document.documentElement.dataset.theme = darkMode ? 'dark' : 'light';
+  const btn = document.getElementById('dark-toggle-btn');
+  if (btn) btn.textContent = darkMode ? '☀️' : '🌙';
+}
+
+document.getElementById('dark-toggle-btn').addEventListener('click', () => {
+  darkMode = !darkMode;
+  localStorage.setItem('sc_darkmode', darkMode ? '1' : '0');
+  applyTheme();
+});
+
+// ═══════════════════════════════════════════════════
+//  MODAL CLOSE BUTTONS (✕)
+// ═══════════════════════════════════════════════════
+document.getElementById('fav-close').addEventListener('click', closeFavModal);
+document.getElementById('league-close').addEventListener('click', () => leagueOverlay.classList.remove('show'));
+document.getElementById('cal-close-x').addEventListener('click', () => {
+  document.getElementById('cal-overlay').classList.remove('show');
+  calPendingEid = null; calPendingBtn = null;
+});
+document.getElementById('standings-close-x').addEventListener('click', () => standingsOverlay.classList.remove('show'));
+
+// ═══════════════════════════════════════════════════
 //  HEADER DATE
 // ═══════════════════════════════════════════════════
 function setHeaderDate() {
@@ -1665,6 +2064,7 @@ function setHeaderDate() {
 // ═══════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════
+applyTheme();
 setHeaderDate();
 buildPills();
 loadEvents();
