@@ -608,6 +608,95 @@
 
     /* ── API BANNER DARK ──────────────────────────────── */
     [data-theme="dark"] .api-banner { background: #332700; color: #FFC107; border-color: #FFC107; }
+
+    /* ── ONBOARDING ──────────────────────────────────── */
+    #onboarding-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; transition: opacity .35s;
+    }
+    #onboarding-overlay.visible { opacity: 1; }
+    #onboarding-overlay.hidden  { display: none; }
+
+    #onboarding-card {
+      background: var(--card);
+      border-radius: 28px;
+      padding: 40px 28px 32px;
+      width: 100%; max-width: 380px;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+      position: relative;
+      transform: translateY(20px); transition: transform .35s;
+    }
+    #onboarding-overlay.visible #onboarding-card { transform: translateY(0); }
+
+    .ob-screen { display: none; flex-direction: column; align-items: center; gap: 16px; }
+    .ob-screen.active { display: flex; }
+
+    .ob-emoji  { font-size: 52px; line-height: 1; }
+    .ob-title  { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--primary-text); }
+    .ob-sub    { font-size: 15px; color: var(--secondary-text); line-height: 1.5; }
+
+    .ob-start-btn {
+      width: 100%; padding: 16px;
+      background: var(--blue); color: #fff;
+      border: none; border-radius: 14px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      transition: transform .15s, opacity .15s;
+      margin-top: 8px;
+    }
+    .ob-start-btn:active { transform: scale(.97); opacity: .88; }
+
+    .ob-skip {
+      background: none; border: none; cursor: pointer;
+      font-size: 13px; color: var(--secondary-text); font-weight: 500;
+      padding: 4px 8px; border-radius: 8px;
+      transition: color .15s;
+    }
+    .ob-skip:hover { color: var(--primary-text); }
+
+    /* Progress */
+    .ob-progress-wrap {
+      width: 100%; display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+    }
+    .ob-progress-bar {
+      flex: 1; height: 4px; background: var(--bg2); border-radius: 100px; overflow: hidden;
+    }
+    #ob-progress-fill {
+      height: 100%; background: var(--blue); border-radius: 100px;
+      transition: width .3s ease;
+    }
+    #ob-progress-label { font-size: 12px; color: var(--secondary-text); font-weight: 600; white-space: nowrap; }
+
+    .ob-question-label {
+      font-size: 18px; font-weight: 700; color: var(--primary-text); margin-bottom: 4px;
+    }
+
+    /* Duel buttons */
+    .ob-duel {
+      display: flex; align-items: center; gap: 12px; width: 100%;
+    }
+    .ob-choice {
+      flex: 1; padding: 20px 12px;
+      background: var(--bg); border: 2px solid var(--separator);
+      border-radius: 18px; cursor: pointer;
+      font-size: 15px; font-weight: 700; color: var(--primary-text);
+      line-height: 1.3; transition: all .18s;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .ob-choice:active, .ob-choice.selected {
+      border-color: var(--blue); background: var(--blue-soft);
+      transform: scale(.97);
+    }
+    .ob-choice-emoji { font-size: 32px; }
+    .ob-vs {
+      font-size: 12px; font-weight: 800; color: var(--secondary-text);
+      text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -685,6 +774,47 @@
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       ONBOARDING
+  ══════════════════════════════════════════════════ -->
+  <div id="onboarding-overlay">
+    <div id="onboarding-card">
+
+      <!-- Pantalla de bienvenida -->
+      <div class="ob-screen active" id="ob-welcome">
+        <div class="ob-emoji">⚽</div>
+        <h1 class="ob-title">Bienvenido</h1>
+        <p class="ob-sub">Dos preguntas rápidas para mostrarte lo que más te interesa.<br>Sin formularios, solo elige.</p>
+        <button class="ob-start-btn" id="ob-start">Empezar →</button>
+        <button class="ob-skip" id="ob-skip-all">Saltar</button>
+      </div>
+
+      <!-- Pantallas de elección -->
+      <div class="ob-screen" id="ob-questions">
+        <div class="ob-progress-wrap">
+          <div class="ob-progress-bar"><div id="ob-progress-fill"></div></div>
+          <span id="ob-progress-label">1 / 4</span>
+        </div>
+        <p class="ob-question-label" id="ob-question-label">¿Con cuál te quedas?</p>
+        <div class="ob-duel" id="ob-duel">
+          <button class="ob-choice" id="ob-choice-a"></button>
+          <span class="ob-vs">vs</span>
+          <button class="ob-choice" id="ob-choice-b"></button>
+        </div>
+        <button class="ob-skip" id="ob-skip-q">Saltar pregunta</button>
+      </div>
+
+      <!-- Pantalla final -->
+      <div class="ob-screen" id="ob-done">
+        <div class="ob-emoji">🎉</div>
+        <h2 class="ob-title">¡Listo!</h2>
+        <p class="ob-sub">Personalizamos tu experiencia.<br>Siempre puedes cambiar las ligas desde el menú.</p>
+        <button class="ob-start-btn" id="ob-finish">Ver partidos</button>
+      </div>
+
+    </div>
+  </div>
 
   <!-- MODAL: EQUIPOS FAVORITOS -->
   <div class="overlay" id="fav-overlay">
@@ -2060,6 +2190,142 @@ function setHeaderDate() {
   });
   document.getElementById('current-date').textContent = s.charAt(0).toUpperCase() + s.slice(1);
 }
+
+// ═══════════════════════════════════════════════════
+//  ONBOARDING
+// ═══════════════════════════════════════════════════
+(function initOnboarding() {
+  if (localStorage.getItem('sc_onboarding_done')) return;
+
+  // Preguntas: cada opción tiene un emoji, nombre y las ligas que refuerza
+  const QUESTIONS = [
+    {
+      label: '¿Con cuál te quedas?',
+      a: { emoji: '🐐', name: 'Messi',      leagues: ['arg.1', 'esp.1', 'uefa.champions'] },
+      b: { emoji: '🔴', name: 'Cristiano',  leagues: ['eng.1', 'esp.1', 'uefa.champions'] }
+    },
+    {
+      label: '¿El mejor de los 2000s?',
+      a: { emoji: '🪄', name: 'Ronaldinho', leagues: ['bra.1', 'esp.1'] },
+      b: { emoji: '🎩', name: 'Kaká',       leagues: ['ita.1', 'esp.1', 'uefa.champions'] }
+    },
+    {
+      label: '¿Más entretenido de ver?',
+      a: { emoji: '⚽', name: 'Fútbol',      leagues: ['arg.1', 'chi.1', 'esp.1', 'eng.1', 'uefa.champions', 'conmebol.libertadores'] },
+      b: { emoji: '🏀', name: 'Basketball',  leagues: ['nba'] }
+    },
+    {
+      label: '¿Tu pasión es local o mundial?',
+      a: { emoji: '🇨🇱', name: 'Soy del patio\n(Chile / Arg)',  leagues: ['chi.1', 'arg.1', 'conmebol.libertadores', 'conmebol.sudamericana'] },
+      b: { emoji: '🌍', name: 'Sigo lo\nglobal',               leagues: ['eng.1', 'esp.1', 'uefa.champions', 'nba'] }
+    }
+  ];
+
+  const leagueScore = {};
+  let currentQ = 0;
+
+  const overlay   = document.getElementById('onboarding-overlay');
+  const welcome   = document.getElementById('ob-welcome');
+  const questions = document.getElementById('ob-questions');
+  const done      = document.getElementById('ob-done');
+  const choiceA   = document.getElementById('ob-choice-a');
+  const choiceB   = document.getElementById('ob-choice-b');
+  const progFill  = document.getElementById('ob-progress-fill');
+  const progLabel = document.getElementById('ob-progress-label');
+  const qLabel    = document.getElementById('ob-question-label');
+
+  function showOverlay() {
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+  }
+
+  function hideOverlay() {
+    overlay.classList.remove('visible');
+    setTimeout(() => overlay.classList.add('hidden'), 350);
+  }
+
+  function showScreen(el) {
+    [welcome, questions, done].forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function renderQuestion() {
+    const q = QUESTIONS[currentQ];
+    qLabel.textContent = q.label;
+    choiceA.innerHTML = `<span class="ob-choice-emoji">${q.a.emoji}</span>${q.a.name}`;
+    choiceB.innerHTML = `<span class="ob-choice-emoji">${q.b.emoji}</span>${q.b.name}`;
+    choiceA.classList.remove('selected');
+    choiceB.classList.remove('selected');
+    progFill.style.width  = `${((currentQ) / QUESTIONS.length) * 100}%`;
+    progLabel.textContent = `${currentQ + 1} / ${QUESTIONS.length}`;
+  }
+
+  function pickAnswer(leagues) {
+    leagues.forEach(l => { leagueScore[l] = (leagueScore[l] || 0) + 1; });
+    nextQuestion();
+  }
+
+  function nextQuestion() {
+    currentQ++;
+    if (currentQ >= QUESTIONS.length) {
+      applyLeaguePreferences();
+      progFill.style.width = '100%';
+      showScreen(done);
+    } else {
+      renderQuestion();
+    }
+  }
+
+  function applyLeaguePreferences() {
+    // Ordenar ligas por puntaje descendente, mezclar con las ya fijadas
+    const sorted = Object.entries(leagueScore)
+      .sort((a, b) => b[1] - a[1])
+      .map(([lid]) => lid);
+
+    // Obtener orden actual
+    let order = JSON.parse(localStorage.getItem('sc_league_order') || '[]');
+    // Agregar al frente las que tienen mayor puntaje si no están ya
+    const top = sorted.slice(0, 4);
+    const newOrder = [...new Set([...top, ...order])];
+    localStorage.setItem('sc_league_order', JSON.stringify(newOrder));
+
+    // Fijar automáticamente las top 3
+    let pinned = JSON.parse(localStorage.getItem('sc_pinned') || '[]');
+    top.slice(0, 3).forEach(l => { if (!pinned.includes(l)) pinned.unshift(l); });
+    localStorage.setItem('sc_pinned', JSON.stringify(pinned));
+  }
+
+  function finish() {
+    localStorage.setItem('sc_onboarding_done', '1');
+    hideOverlay();
+    // Reconstruir pills con las preferencias nuevas
+    buildPills();
+  }
+
+  // Listeners
+  document.getElementById('ob-start').addEventListener('click', () => {
+    showScreen(questions);
+    renderQuestion();
+  });
+
+  document.getElementById('ob-skip-all').addEventListener('click', finish);
+  document.getElementById('ob-skip-q').addEventListener('click', nextQuestion);
+  document.getElementById('ob-finish').addEventListener('click', finish);
+
+  choiceA.addEventListener('click', () => {
+    choiceA.classList.add('selected');
+    const q = QUESTIONS[currentQ];
+    setTimeout(() => pickAnswer(q?.a.leagues || []), 220);
+  });
+  choiceB.addEventListener('click', () => {
+    choiceB.classList.add('selected');
+    const q = QUESTIONS[currentQ];
+    setTimeout(() => pickAnswer(q?.b.leagues || []), 220);
+  });
+
+  // Mostrar con pequeño delay para que la app cargue primero
+  setTimeout(showOverlay, 600);
+})();
 
 // ═══════════════════════════════════════════════════
 //  INIT
