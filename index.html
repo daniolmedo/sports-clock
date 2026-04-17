@@ -617,9 +617,9 @@
       -webkit-backdrop-filter: blur(12px);
       display: flex; align-items: center; justify-content: center;
       padding: 24px;
-      opacity: 0; transition: opacity .35s;
+      opacity: 0; pointer-events: none; transition: opacity .35s;
     }
-    #onboarding-overlay.visible { opacity: 1; }
+    #onboarding-overlay.visible { opacity: 1; pointer-events: auto; }
     #onboarding-overlay.hidden  { display: none; }
 
     #onboarding-card {
