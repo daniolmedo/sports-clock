@@ -196,6 +196,24 @@
       background: rgba(59, 130, 246, .12);
       color: var(--blue);
     }
+    .choco-menu {
+      display: grid;
+      grid-template-columns: repeat(3, 8px);
+      gap: 3px;
+      margin: 0;
+    }
+    .choco-menu span {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--secondary-text);
+      display: inline-block;
+    }
+    .choco-label {
+      margin-left: 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
     .section-title { font-size: 22px; font-weight: 700; letter-spacing: -.4px; }
     .badge-count {
       font-size: 12px; font-weight: 600; color: var(--secondary-text);
@@ -232,6 +250,19 @@
       background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
       box-shadow: var(--shadow-sm); transition: transform .15s;
     }
+    .match-card.finished {
+      background: var(--bg2); color: var(--secondary-text);
+      box-shadow: none;
+    }
+    .match-card.finished .league-lbl,
+    .match-card.finished .team-name,
+    .match-card.finished .emotion-copy,
+    .match-card.finished .vs-txt,
+    .match-card.finished .day-small,
+    .match-card.finished .score-txt {
+      color: var(--secondary-text);
+    }
+    .match-card.finished.is-fav { border-left-color: var(--yellow); }
     .match-card:active { transform: scale(.985); }
     .match-card.is-fav { border-left: 3px solid var(--yellow); padding-left: 13px; }
 
@@ -815,8 +846,8 @@
     <!-- ── CONTENT ──────────────────────────────────── -->
     <main class="content-area">
       <div class="content-toolbar">
-        <button class="toolbar-btn" id="attractiveness-filter-btn" title="Mostrar solo partidos atractivos">🔥</button>
-        <button class="toolbar-btn" id="layout-toggle-btn" title="Cambiar vista de tarjetas">☰</button>
+        <button class="toolbar-btn" id="fire-filter-btn" title="Filtrar partidos con más fuego">🔥</button>
+        <button class="toolbar-btn" id="layout-toggle-btn" title="Cambiar vista de tarjetas"></button>
       </div>
 
       <!-- PAGE: HOY -->
@@ -1089,8 +1120,8 @@ let leaguePins      = JSON.parse(localStorage.getItem('sc_league_pins')     || '
 let leagueOrder     = JSON.parse(localStorage.getItem('sc_league_order')    || '[]');
 let collapsedGroups     = JSON.parse(localStorage.getItem('sc_collapsed_groups')     || '{}');
 let collapsedSportPills = JSON.parse(localStorage.getItem('sc_collapsed_sport_pills') || '{}');
-let attractiveOnly    = localStorage.getItem('sc_attractive_only') === '1';
-let viewLayout        = localStorage.getItem('sc_view_layout') || 'grid2';
+let fireFilterActive = localStorage.getItem('sc_fire_filter') === '1';
+let viewLayout         = localStorage.getItem('sc_view_layout') || 'grid2';
 let teamLogos       = JSON.parse(localStorage.getItem('sc_team_logos')      || '{}');
 let loadedTeamLogoLeagues = {};
 let tmpFavs         = [];
@@ -1255,11 +1286,18 @@ function parseESPNEvent(rawEvent, leagueId) {
 // Aquí se construye el copy que aparece debajo de los canales y el conteo de fuegos.
 function getMatchEmotion(ev) {
   const classicDerbies = ['River', 'Boca', 'Colo', 'U de Chile', 'Universidad Católica', 'Flamengo', 'Fluminense', 'Palmeiras', 'Corinthians', 'Real Madrid', 'Barcelona', 'Manchester United', 'Manchester City', 'Lakers', 'Celtics'];
-  const derbyScore = classicDerbies.some(name => ev.home.includes(name) && ev.away.includes(name));
-  const isCopa = ['lib', 'sud', 'ucl'].includes(ev._lid);
+  const bigClubs = ['Real Madrid','Barcelona','Manchester City','Manchester United','Liverpool','Bayern','PSG','Juventus','Inter','AC Milan','Atletico','Flamengo','Palmeiras','Boca','River','Colo','U de Chile','Universidad Católica','Lakers','Celtics','Heat','Bulls','Warriors','Nuggets','Chiefs','Cowboys','49ers','Packers','Patriots','Bills'];
+
+  const isDerby = classicDerbies.some(name => ev.home.includes(name) && ev.away.includes(name));
+  const isCopa = ['lib', 'sud', 'ucl', 'uel'].includes(ev._lid);
   const isLive = ev.state === 'in' && ev.homeScore !== null && ev.awayScore !== null;
   const scoreDiff = isLive ? Math.abs(ev.homeScore - ev.awayScore) : 0;
   const homeLeads = isLive && ev.homeScore > ev.awayScore;
+  const homeTop = bigClubs.some(name => ev.home.includes(name));
+  const awayTop = bigClubs.some(name => ev.away.includes(name));
+  const topCount = Number(homeTop) + Number(awayTop);
+  const isLeaderClash = topCount === 2;
+  const isMatarOMorir = isCopa || isDerby || isLeaderClash;
 
   function pick(list) {
     const seed = (ev.id + ev.home + ev.away).split('').reduce((sum, c) => sum + c.charCodeAt(0), 0);
@@ -1278,35 +1316,76 @@ function getMatchEmotion(ev) {
           `En vivo: ${ev.home} ${ev.homeScore}–${ev.awayScore} ${ev.away}, pinta para el último tramo`,
           `${homeLeads ? ev.home : ev.away} manda en el marcador; no lo dejes escapar`
         ];
-    return { fires: 4, copy: pick(liveTemplates) };
+    return {
+      fires: scoreDiff <= 1 ? 5 : 4,
+      copy: pick(liveTemplates),
+      isDerby,
+      isCopa,
+      isLeaderClash,
+      isMatarOMorir,
+    };
   }
 
-  if (derbyScore) {
-    const derbyTemplates = [
-      `Clásico con chispa: ${ev.home} y ${ev.away} se juegan el orgullo`,
-      `Partidazo local: ${ev.home} recibe a ${ev.away} con todo en juego`,
-      `${ev.home} vs ${ev.away} es duelo de clásicos, vale mucho la pena`
-    ];
-    return { fires: 4, copy: pick(derbyTemplates) };
-  }
+  let score = 30;
+  if (isCopa) score += 28;
+  if (isDerby) score += 30;
+  if (isLeaderClash) score += 18;
+  if (topCount === 1) score += 8;
+  if (['nba','nfl','lib','ucl','uel','pl','laliga','arg','chi'].includes(ev._lid)) score += 10;
 
-  if (isCopa) {
-    const copaTemplates = [
-      `Partido de copa que pesa: ${ev.home} y ${ev.away} no pueden regalar nada`,
-      `${ev.home} y ${ev.away} se enfrentan en un encuentro con semanas de atrás`,
-      `Choque de copa: foco en cada balón, este partido tiene tensión`
-    ];
-    return { fires: 4, copy: pick(copaTemplates) };
-  }
+  if (isCopa && topCount === 2) score += 8;
+  if (isDerby && topCount === 2) score += 6;
+
+  const fires = score >= 78 ? 5 : score >= 56 ? 4 : score >= 34 ? 3 : score >= 18 ? 2 : 1;
+
+  const derbyTemplates = [
+    `Clásico con chispa: ${ev.home} y ${ev.away} se juegan el orgullo`,
+    `Partidazo local: ${ev.home} recibe a ${ev.away} con todo en juego`,
+    `${ev.home} vs ${ev.away} es duelo de clásicos, vale mucho la pena`
+  ];
+
+  const copaTemplates = [
+    `Partido de copa que pesa: ${ev.home} y ${ev.away} no pueden regalar nada`,
+    `${ev.home} y ${ev.away} se enfrentan en un encuentro con semanas de atrás`,
+    `Choque de copa: foco en cada balón, este partido tiene tensión`
+  ];
+
+  const leaderTemplates = [
+    `${ev.home} y ${ev.away} son dos nombres grandes: duelo de líderes que pinta duro`,
+    `Duelo de líderes: ${ev.home} recibe a ${ev.away}, se juega la punta`,
+    `Partido de poder: ${ev.home} vs ${ev.away} promete intensidad`
+  ];
+
+  const matarTemplates = [
+    `Se juega mucho: ${ev.home} y ${ev.away} no pueden regalar nada`,
+    `Partido tipo matar o morir, cada balón vale`,
+    `Ambos llegan con presión, este partido puede ser clave`
+  ];
 
   const normalTemplates = [
-    `Buen plan para ver, ${ev.home} viene prendido y ${ev.away} necesita sumar puntos`,
-    `Si te gustan los partidos con historia, ${ev.home} recibe a ${ev.away} en casa`,
-    `${ev.home} busca sostener la racha y ${ev.away} quiere llevarse algo`,
-    `${ev.home} llega con ganas y ${ev.away} no puede permitirse fallar`,
-    `Partido interesante: ${ev.home} vs ${ev.away}, se juega mucho en la zona media`
+    `${ev.home} recibe a ${ev.away} con ganas de sumar`,
+    `Partido simple pero con potencial: ${ev.home} busca una buena tarde`,
+    `${ev.home} y ${ev.away} se enfrentan, puede aparecer algo interesante`,
+    `Si querís un plan tranquilo, este encuentro tiene su chispa`,
+    `Pinta para un partido parejo, hay que verlo para saber`
   ];
-  return { fires: 3, copy: pick(normalTemplates) };
+
+  let copy;
+  if (isDerby) copy = pick(derbyTemplates);
+  else if (isCopa) copy = pick(copaTemplates);
+  else if (isLeaderClash) copy = pick(leaderTemplates);
+  else if (isMatarOMorir) copy = pick(matarTemplates);
+  else if (fires >= 4) copy = `Partido con bastante chispa: ${ev.home} vs ${ev.away}`;
+  else copy = pick(normalTemplates);
+
+  return {
+    fires,
+    copy,
+    isDerby,
+    isCopa,
+    isLeaderClash,
+    isMatarOMorir,
+  };
 }
 
 function renderFireRating(fires) {
@@ -1373,7 +1452,7 @@ function filtered() {
   let evs = activeLeague === 'all'
     ? allEvents
     : allEvents.filter(e => e._lid === activeLeague);
-  if (attractiveOnly) {
+  if (fireFilterActive) {
     evs = evs.filter(e => getMatchEmotion(e).fires >= 4);
   }
   return evs;
@@ -1539,7 +1618,7 @@ function cardHTML(ev) {
        </button>`;
 
   return `
-    <div class="match-card${fav ? ' is-fav' : ''}">
+    <div class="match-card${fav ? ' is-fav' : ''}${fin ? ' finished' : ''}">
       <div class="card-top">
         <div class="league-tag">
           <div class="league-dot" style="background:${lg.color}"></div>
@@ -1621,6 +1700,15 @@ function renderGrouped(evs, container) {
   const groups = groupBySport(evs);
   let html = '';
   Object.entries(groups).forEach(([sport, events]) => {
+    events.sort((a, b) => {
+      const finishedDiff = (a.finished ? 1 : 0) - (b.finished ? 1 : 0);
+      if (finishedDiff !== 0) return finishedDiff;
+      if (fireFilterActive) {
+        const favor = getMatchEmotion(b).fires - getMatchEmotion(a).fires;
+        if (favor !== 0) return favor;
+      }
+      return a._utcDate - b._utcDate;
+    });
     const sl = SPORT_LABELS[sport] || { emoji: '🏅', label: sport };
     const isCollapsed = collapsedGroups[sport] ? 'collapsed' : '';
     html += `
@@ -2384,26 +2472,34 @@ function applyTheme() {
   if (btn) btn.textContent = darkMode ? '☀️' : '🌙';
 }
 
-function applyAttractivenessFilter() {
-  const btn = document.getElementById('attractiveness-filter-btn');
+function applyFireFilter() {
+  const btn = document.getElementById('fire-filter-btn');
   if (!btn) return;
-  btn.classList.toggle('active', attractiveOnly);
-  btn.title = attractiveOnly
-    ? 'Mostrando solo partidos con más fuego'
+  btn.classList.toggle('active', fireFilterActive);
+  btn.textContent = fireFilterActive ? '🔥 4+' : '🔥';
+  btn.title = fireFilterActive
+    ? 'Solo partidos con fuego alto'
     : 'Mostrar todos los partidos';
+}
+
+function layoutButtonHTML() {
+  const label = viewLayout === 'grid4' ? '4' : viewLayout === 'grid2' ? '2' : '1';
+  return `<span class="choco-menu">` +
+    Array.from({ length: 9 }, () => '<span></span>').join('') +
+    `</span><span class="choco-label">${label}</span>`;
 }
 
 function applyLayoutMode() {
   document.documentElement.dataset.layout = viewLayout;
   const btn = document.getElementById('layout-toggle-btn');
   if (!btn) return;
-  const labels = {
-    grid2: '2 columnas',
-    grid4: '4 columnas',
-    list: '1 columna'
-  };
   btn.classList.toggle('active', viewLayout !== 'grid2');
-  btn.title = `Vista ${labels[viewLayout]}`;
+  btn.title = viewLayout === 'grid4'
+    ? '4 partidos por fila'
+    : viewLayout === 'grid2'
+      ? '2 partidos por fila'
+      : 'Vista lista';
+  btn.innerHTML = layoutButtonHTML();
 }
 
 document.getElementById('dark-toggle-btn').addEventListener('click', () => {
@@ -2412,10 +2508,10 @@ document.getElementById('dark-toggle-btn').addEventListener('click', () => {
   applyTheme();
 });
 
-document.getElementById('attractiveness-filter-btn').addEventListener('click', () => {
-  attractiveOnly = !attractiveOnly;
-  localStorage.setItem('sc_attractive_only', attractiveOnly ? '1' : '0');
-  applyAttractivenessFilter();
+document.getElementById('fire-filter-btn').addEventListener('click', () => {
+  fireFilterActive = !fireFilterActive;
+  localStorage.setItem('sc_fire_filter', fireFilterActive ? '1' : '0');
+  applyFireFilter();
   renderAll();
 });
 
@@ -2589,7 +2685,7 @@ function setHeaderDate() {
 // ═══════════════════════════════════════════════════
 applyTheme();
 applyLayoutMode();
-applyAttractivenessFilter();
+applyFireFilter();
 setHeaderDate();
 buildPills();
 loadEvents();
