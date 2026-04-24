@@ -127,12 +127,17 @@
     }
     .density-btn svg { width: 18px; height: 18px; }
     .density-btn.active { background: rgba(59, 130, 246, 0.16); color: var(--blue); }
-      display: flex; gap: 8px; padding: 8px 12px 12px 20px;
+    .pills-wrap {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px 12px 20px;
       overflow-x: auto; scrollbar-width: none;
     }
-    .pills-track::-webkit-scrollbar { display: none; }
+    .pills-wrap::-webkit-scrollbar { display: none; }
+    .pills-track {
+      display: flex; gap: 8px; min-width: 0;
+    }
     .pill {
-      flex-shrink: 0; padding: 7px 16px; border-radius: 100px; border: none;
+      flex-shrink: 0; padding: 8px 12px; border-radius: 999px; border: none;
       background: var(--card); color: var(--secondary-text);
       font-size: 13px; font-weight: 600; cursor: pointer;
       box-shadow: var(--shadow-sm); transition: all .2s; white-space: nowrap;
@@ -215,10 +220,6 @@
       font-weight: 700;
     }
     .section-title { font-size: 22px; font-weight: 700; letter-spacing: -.4px; }
-    .badge-count {
-      font-size: 12px; font-weight: 600; color: var(--secondary-text);
-      background: var(--bg2); padding: 3px 10px; border-radius: 100px;
-    }
 
     /* ── DAY STRIP ───────────────────────────────────── */
     .day-strip { display: flex; gap: 8px; padding: 0 0 14px; overflow-x: auto; scrollbar-width: none; }
@@ -253,6 +254,7 @@
     .match-card.finished {
       background: var(--bg2); color: var(--secondary-text);
       box-shadow: none;
+      cursor: pointer;
     }
     .match-card.finished .league-lbl,
     .match-card.finished .team-name,
@@ -854,7 +856,6 @@
       <div class="page on" id="page-hoy">
         <div class="section-row">
           <span class="section-title">Hoy</span>
-          <span class="badge-count" id="cnt-hoy">—</span>
         </div>
         <div class="api-banner" id="banner-hoy"></div>
         <div id="list-hoy">
@@ -1618,7 +1619,7 @@ function cardHTML(ev) {
        </button>`;
 
   return `
-    <div class="match-card${fav ? ' is-fav' : ''}${fin ? ' finished' : ''}">
+    <div class="match-card${fav ? ' is-fav' : ''}${fin ? ' finished' : ''}" data-eid="${ev.id}">
       <div class="card-top">
         <div class="league-tag">
           <div class="league-dot" style="background:${lg.color}"></div>
@@ -1672,6 +1673,13 @@ function bindCards(root) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       openMatchStats(btn.dataset.eid);
+    });
+  });
+  root.querySelectorAll('.match-card.finished').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      const eid = card.dataset.eid;
+      if (eid) openMatchStats(eid);
     });
   });
   // Logo del equipo → tabla de posiciones
@@ -1747,7 +1755,6 @@ function renderAll() {
 function renderHoy() {
   const today = todayDateStr();
   const evs   = eventsForDay(today);
-  document.getElementById('cnt-hoy').textContent = `${evs.length} partido${evs.length !== 1 ? 's' : ''}`;
   const banner = document.getElementById('banner-hoy');
   if (apiErrors.length > 0) {
     banner.textContent = '⚠️ Algunos datos pueden estar incompletos. La app se actualizará automáticamente.';
