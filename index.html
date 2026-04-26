@@ -322,7 +322,6 @@
     .fire-rating { display: flex; align-items: center; gap: 2px; }
     .fire-star { font-size: 12px; line-height: 1; }
     .fire-star.empty { opacity: .25; }
-    .fire-score { font-size: 12px; color: var(--secondary-text); font-weight: 700; }
     .emotion-copy {
       font-size: 12px; font-weight: 700; color: var(--secondary-text);
       line-height: 1.3; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -1133,6 +1132,7 @@ let tmpLeaguePins   = [];
 let tmpLeagueOrder  = [];
 let apiErrors       = [];
 let lastRefreshTime = null;
+let standingsCache  = {}; // { leagueId: { teamDisplayName: { rank, total } } }
 
 let calPendingEid = null;
 let calPendingBtn = null;
@@ -1198,6 +1198,24 @@ async function ensureFavoriteTeamLogos() {
   for (const league of leagueSources) {
     await fetchLeagueTeamLogos(league.sport, league.slug);
   }
+}
+
+async function fetchLeagueStandings(league) {
+  try {
+    const url = `https://site.api.espn.com/apis/v2/sports/${league.sport}/${league.slug}/standings`;
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const data = await res.json();
+    const entries = data?.children?.[0]?.standings?.entries || [];
+    if (!entries.length) return;
+    const map = {};
+    entries.forEach(e => {
+      const name = e.team?.displayName;
+      const rank = e.stats?.find(s => s.name === 'rank')?.value;
+      if (name && rank != null) map[name] = { rank: Math.round(rank), total: entries.length };
+    });
+    standingsCache[league.id] = map;
+  } catch (_) {}
 }
 
 // ═══════════════════════════════════════════════════
@@ -1286,13 +1304,59 @@ function parseESPNEvent(rawEvent, leagueId) {
   };
 }
 
-// Generador MVP del texto y la cantidad de fuegos para el Índice de Emoción.
+// Generador del texto y la cantidad de fuegos para el Índice de Emoción.
 // Aquí se construye el copy que aparece debajo de los canales y el conteo de fuegos.
 function getMatchEmotion(ev) {
-  const classicDerbies = ['River', 'Boca', 'Colo', 'U de Chile', 'Universidad Católica', 'Flamengo', 'Fluminense', 'Palmeiras', 'Corinthians', 'Real Madrid', 'Barcelona', 'Manchester United', 'Manchester City', 'Lakers', 'Celtics'];
-  const bigClubs = ['Real Madrid','Barcelona','Manchester City','Manchester United','Liverpool','Bayern','PSG','Juventus','Inter','AC Milan','Atletico','Flamengo','Palmeiras','Boca','River','Colo','U de Chile','Universidad Católica','Lakers','Celtics','Heat','Bulls','Warriors','Nuggets','Chiefs','Cowboys','49ers','Packers','Patriots','Bills'];
+  // Rivalidades históricas conocidas. La detección es por pares, no por nombre individual,
+  // porque el nombre del clásico no tiene nada que ver con los nombres de los equipos.
+  // bonus = puntos extra sobre la base de fuegos (los superclásicos siempre salen 5).
+  const KNOWN_RIVALRIES = [
+    // Chile
+    { teams: ['Universidad de Chile', 'Católica'],   label: 'Clásico Universitario',       bonus: 15 },
+    { teams: ['Colo',       'Universidad de Chile'],label: 'Superclásico chileno',         bonus: 10 },
+    { teams: ['Colo',       'Católica'],            label: 'Clásico chileno',              bonus: 5  },
+    // Argentina
+    { teams: ['River',      'Boca'],                label: 'Superclásico',                 bonus: 15 },
+    { teams: ['Racing',     'Independiente'],        label: 'Clásico de Avellaneda',        bonus: 8  },
+    { teams: ['San Lorenzo','Huracán'],             label: 'Clásico del bajo',             bonus: 5  },
+    { teams: ['Estudiantes','Gimnasia'],            label: 'Clásico platense',             bonus: 5  },
+    // La Liga
+    { teams: ['Real Madrid','Barcelona'],           label: 'El Clásico',                   bonus: 15 },
+    { teams: ['Real Madrid','Atlético'],            label: 'Derbi madrileño',              bonus: 10 },
+    { teams: ['Sevilla',    'Betis'],               label: 'Derbi sevillano',              bonus: 8  },
+    { teams: ['Barcelona',  'Espanyol'],            label: 'Derbi barcelonés',             bonus: 5  },
+    // Premier League
+    { teams: ['Manchester United','Manchester City'],label: 'Derbi de Manchester',         bonus: 15 },
+    { teams: ['Liverpool',  'Everton'],             label: 'Derbi de Merseyside',          bonus: 10 },
+    { teams: ['Arsenal',    'Tottenham'],           label: 'Derbi del norte de Londres',   bonus: 10 },
+    { teams: ['Chelsea',    'Arsenal'],             label: 'Derbi de Londres',             bonus: 8  },
+    { teams: ['Chelsea',    'Tottenham'],           label: 'Derbi de Londres',             bonus: 8  },
+    // Copa Libertadores / Sudamericana (equipos que aparecen aunque su liga no esté soportada)
+    { teams: ['Nacional',   'Peñarol'],             label: 'Clásico uruguayo',             bonus: 15 },
+    { teams: ['Flamengo',   'Fluminense'],          label: 'Fla-Flu',                      bonus: 12 },
+    { teams: ['Corinthians','Palmeiras'],           label: 'Derbi paulista',               bonus: 10 },
+    { teams: ['Grêmio',     'Internacional'],       label: 'Grenal',                       bonus: 10 },
+    // NBA
+    { teams: ['Lakers',     'Celtics'],             label: 'El clásico de la NBA',         bonus: 15 },
+    { teams: ['Heat',       'Celtics'],             label: 'Clásico de playoffs',          bonus: 8  },
+    // NFL
+    { teams: ['Cowboys',    'Eagles'],              label: 'Clásico del Este NFC',         bonus: 8  },
+    { teams: ['Bears',      'Packers'],             label: 'Clásico histórico de la NFL',  bonus: 8  },
+    { teams: ['Patriots',   'Bills'],               label: 'Clásico del Este AFC',         bonus: 8  },
+  ];
 
-  const isDerby = classicDerbies.some(name => ev.home.includes(name) && ev.away.includes(name));
+  const bigClubs = ['Real Madrid','Barcelona','Manchester City','Manchester United','Liverpool','Bayern','PSG','Juventus','Inter','AC Milan','Atletico','Flamengo','Palmeiras','Boca','River','Colo','Universidad de Chile','Universidad Católica','Lakers','Celtics','Heat','Bulls','Warriors','Nuggets','Chiefs','Cowboys','49ers','Packers','Patriots','Bills'];
+
+  const matchedRivalry = KNOWN_RIVALRIES.find(r => {
+    const [a, b] = r.teams;
+    return (ev.home.includes(a) && ev.away.includes(b)) ||
+           (ev.home.includes(b) && ev.away.includes(a));
+  });
+
+  const isDerby = !!matchedRivalry;
+  const rivalryLabel = matchedRivalry?.label;
+  const rivalryBonus = matchedRivalry?.bonus ?? 0;
+
   const isCopa = ['lib', 'sud', 'ucl', 'uel'].includes(ev._lid);
   const isLive = ev.state === 'in' && ev.homeScore !== null && ev.awayScore !== null;
   const scoreDiff = isLive ? Math.abs(ev.homeScore - ev.awayScore) : 0;
@@ -1330,57 +1394,128 @@ function getMatchEmotion(ev) {
     };
   }
 
+  // Standings: paridad y stakes con datos reales
+  const leagueStandings = standingsCache[ev._lid] || {};
+  const homeS = leagueStandings[ev.home];
+  const awayS = leagueStandings[ev.away];
+  let bothInRelegation = false;
+  let bothInTitle = false;
+
   let score = 30;
-  if (isCopa) score += 28;
-  if (isDerby) score += 30;
+  if (isCopa)        score += 28;
+  if (isDerby)       score += 30;
+  if (rivalryBonus)  score += rivalryBonus;
   if (isLeaderClash) score += 18;
   if (topCount === 1) score += 8;
   if (['nba','nfl','lib','ucl','uel','pl','laliga','arg','chi'].includes(ev._lid)) score += 10;
-
   if (isCopa && topCount === 2) score += 8;
   if (isDerby && topCount === 2) score += 6;
 
+  if (homeS && awayS) {
+    const posDiff = Math.abs(homeS.rank - awayS.rank);
+    if (posDiff <= 2)      score += 12;
+    else if (posDiff <= 5) score += 6;
+    else if (posDiff <= 9) score += 2;
+
+    const cutoff = Math.ceil(homeS.total * 0.2);
+    const homeTop = homeS.rank <= cutoff;
+    const homeBtm = homeS.rank > homeS.total - cutoff;
+    const awayTop = awayS.rank <= cutoff;
+    const awayBtm = awayS.rank > awayS.total - cutoff;
+    bothInRelegation = homeBtm && awayBtm;
+    bothInTitle      = homeTop && awayTop;
+    if (bothInRelegation || bothInTitle) score += 18;
+    else if (homeTop || homeBtm || awayTop || awayBtm) score += 10;
+  }
+
   const fires = score >= 78 ? 5 : score >= 56 ? 4 : score >= 34 ? 3 : score >= 18 ? 2 : 1;
 
-  const derbyTemplates = [
-    `Clásico con chispa: ${ev.home} y ${ev.away} se juegan el orgullo`,
-    `Partidazo local: ${ev.home} recibe a ${ev.away} con todo en juego`,
-    `${ev.home} vs ${ev.away} es duelo de clásicos, vale mucho la pena`
+  const isSoccer = ['chi','arg','laliga','pl','ucl','uel','lib','sud'].includes(ev._lid);
+
+  const derbyTemplates = rivalryLabel ? [
+    `${rivalryLabel}: da igual la tabla, este partido es categoría aparte`,
+    `El ${rivalryLabel} de siempre — da igual cómo lleguen`,
+    `${rivalryLabel}: los números no cuentan, gana quien quiere más`,
+    `Historia pura: el ${rivalryLabel} siempre entrega algo`,
+    `${rivalryLabel} — el partido que no necesita excusa para verlo`,
+    `Clásico con nombre propio: el ${rivalryLabel} para todo`,
+  ] : [
+    `Clásico con historia: ${ev.home} vs ${ev.away} siempre entrega`,
+    `Derby local: ${ev.home} y ${ev.away} se juegan el orgullo`,
+    `${ev.home} vs ${ev.away} — da igual cómo lleguen, este partido tiene su propia lógica`,
+    `Rivalidad de siempre: esto va más allá de los tres puntos`,
   ];
 
-  const copaTemplates = [
-    `Partido de copa que pesa: ${ev.home} y ${ev.away} no pueden regalar nada`,
-    `${ev.home} y ${ev.away} se enfrentan en un encuentro con semanas de atrás`,
-    `Choque de copa: foco en cada balón, este partido tiene tensión`
+  const copaTemplates = isSoccer ? [
+    `Un solo partido, todo en juego — el que falla se va a casa`,
+    `${ev.home} vs ${ev.away} en copa — acá no hay revancha`,
+    `Eliminación directa: no hay margen de error`,
+    `Tensión de copa: cada pelota parada puede ser la diferencia`,
+    `Clasificación en juego — el fútbol de copa tiene otro sabor`,
+    `90 minutos para todo, sin red de protección`,
+  ] : [
+    `Copa al pecho: ${ev.home} vs ${ev.away} con todo por delante`,
+    `Eliminación directa — un error y te vas a casa`,
+    `Partido de copa, diferente nivel de presión, vale verlo`,
   ];
 
-  const leaderTemplates = [
-    `${ev.home} y ${ev.away} son dos nombres grandes: duelo de líderes que pinta duro`,
+  const leaderTemplates = isSoccer ? [
+    `Dos equipos que siempre aparecen arriba — esto pinta partidazo`,
+    `${ev.home} y ${ev.away} se miden: puntos de oro para los dos`,
+    `Cuando los grandes se enfrentan en la liga, siempre hay algo que perder`,
+    `Partido de tres puntos que valen seis — ninguno puede regalar nada`,
+    `Choque de nombres: ${ev.home} vs ${ev.away} tiene nivel`,
+    `Si ves uno hoy, que sea este`,
+  ] : [
+    `${ev.home} y ${ev.away} son dos nombres grandes: duelo que pinta duro`,
     `Duelo de líderes: ${ev.home} recibe a ${ev.away}, se juega la punta`,
-    `Partido de poder: ${ev.home} vs ${ev.away} promete intensidad`
+    `Cuando los grandes se enfrentan, siempre hay algo que perder`,
   ];
 
-  const matarTemplates = [
-    `Se juega mucho: ${ev.home} y ${ev.away} no pueden regalar nada`,
-    `Partido tipo matar o morir, cada balón vale`,
-    `Ambos llegan con presión, este partido puede ser clave`
+  const relegationTemplates = [
+    `Partido de descenso: los dos necesitan ganar sí o sí`,
+    `Zona peligrosa: ${ev.home} y ${ev.away} se juegan seguir en la categoría`,
+    `Matar o morir en la parte baja — cada punto vale doble`,
+    `Los dos vienen sufriendo: esto tiene urgencia de los dos lados`,
+    `Descenso en juego: el que pierde hoy se complica mucho`,
   ];
 
-  const normalTemplates = [
+  const titleRaceTemplates = [
+    `Duelo de arriba: ${ev.home} y ${ev.away} pelean por la punta`,
+    `Los dos están en la pelea del título — este partido define`,
+    `Arriba en la tabla y frente a frente: esto tiene sabor a definición`,
+    `Punta vs punta: el que gana hoy se aleja`,
+    `Partido de primera fila: ambos con chances reales de campeón`,
+  ];
+
+  const medioTemplates = [
+    `${ev.home} vs ${ev.away} — pinta parejo, puede salir cualquier cosa`,
+    `No es el partido del año, pero el gol llega cuando menos lo esperas`,
+    `Tres puntos en juego que igual importan`,
+    `De esos partidos que empatan 2-2 en el último minuto`,
+    `${ev.home} busca los tres puntos en casa — ${ev.away} viene a complicarlo`,
+    `Sin grandes nombres, pero el fútbol siempre sorprende`,
+  ];
+
+  const normalTemplates = isSoccer ? [
+    `Fútbol es fútbol — puede aparecer algo`,
+    `${ev.home} quiere los tres puntos, ${ev.away} también. Así de simple`,
+    `Partido de mitad de tabla, sin urgencias — pero nunca se sabe`,
+    `Si buscas algo de fondo para la tarde, este sirve`,
+  ] : [
     `${ev.home} recibe a ${ev.away} con ganas de sumar`,
-    `Partido simple pero con potencial: ${ev.home} busca una buena tarde`,
     `${ev.home} y ${ev.away} se enfrentan, puede aparecer algo interesante`,
-    `Si buscas un plan tranquilo, este encuentro tiene su chispa`,
-    `Pinta para un partido parejo, hay que verlo para saber`
+    `Pinta para un partido parejo, hay que verlo para saber`,
   ];
 
   let copy;
-  if (isDerby) copy = pick(derbyTemplates);
-  else if (isCopa) copy = pick(copaTemplates);
-  else if (isLeaderClash) copy = pick(leaderTemplates);
-  else if (isMatarOMorir) copy = pick(matarTemplates);
-  else if (fires >= 4) copy = `Partido con bastante chispa: ${ev.home} vs ${ev.away}`;
-  else copy = pick(normalTemplates);
+  if (isDerby)                          copy = pick(derbyTemplates);
+  else if (isCopa)                      copy = pick(copaTemplates);
+  else if (isLeaderClash)               copy = pick(leaderTemplates);
+  else if (bothInRelegation)            copy = pick(relegationTemplates);
+  else if (bothInTitle)                 copy = pick(titleRaceTemplates);
+  else if (fires >= 3 && isSoccer)      copy = pick(medioTemplates);
+  else                                  copy = pick(normalTemplates);
 
   return {
     fires,
@@ -1397,7 +1532,7 @@ function renderFireRating(fires) {
   for (let i = 1; i <= 5; i++) {
     icons += `<span class="fire-star${i <= fires ? '' : ' empty'}">🔥</span>`;
   }
-  return `<span class="fire-rating" aria-label="${fires} de 5 fuegos">${icons}<span class="fire-score">${fires}/5</span></span>`;
+  return `<span class="fire-rating" aria-label="${fires} de 5 fuegos">${icons}</span>`;
 }
 
 async function loadEvents() {
@@ -1409,6 +1544,7 @@ async function loadEvents() {
     d.setDate(today.getDate() + i);
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   });
+  const standingLeagues = LEAGUES.filter(l => ['chi','arg','laliga','pl'].includes(l.id));
   const fetches = LEAGUES.flatMap(league =>
     dates.map(dateStr =>
       fetchESPN(league.sport, league.slug, dateStr).then(rawEvents => {
@@ -1417,7 +1553,10 @@ async function loadEvents() {
       })
     )
   );
-  const results = await Promise.all(fetches);
+  const [results] = await Promise.all([
+    Promise.all(fetches),
+    Promise.all(standingLeagues.map(l => fetchLeagueStandings(l))),
+  ]);
   allEvents = results
     .flat()
     .filter((e, i, arr) => arr.findIndex(x => x.id === e.id) === i)
