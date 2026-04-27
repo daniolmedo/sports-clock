@@ -2784,7 +2784,9 @@ function setHeaderDate() {
     },
   ];
 
-  const TOTAL_DUELS = BRACKETS.reduce((sum, b) => sum + b.contestants.length - 1, 0);
+  // Un bracket al azar por usuario — liviano y con variedad
+  const SELECTED = [BRACKETS[Math.floor(Math.random() * BRACKETS.length)]];
+  const TOTAL_DUELS = SELECTED[0].contestants.length - 1;
   const leagueScore = {};
   let bracketIdx    = 0;
   let challengerIdx = 2;
@@ -2824,7 +2826,7 @@ function setHeaderDate() {
   function renderDuel(a, b) {
     currentA = a;
     currentB = b;
-    qLabel.textContent = BRACKETS[bracketIdx].title;
+    qLabel.textContent = SELECTED[0].title;
     choiceA.innerHTML  = contestantHTML(a);
     choiceB.innerHTML  = contestantHTML(b);
     choiceA.classList.remove('selected','loser');
@@ -2839,19 +2841,13 @@ function setHeaderDate() {
     winner.leagues.forEach(l => { leagueScore[l] = (leagueScore[l] || 0) + 1; });
     duelsCompleted++;
 
-    const bracket = BRACKETS[bracketIdx];
+    const bracket = SELECTED[0];
     if (challengerIdx < bracket.contestants.length) {
       renderDuel(winner, bracket.contestants[challengerIdx++]);
     } else {
-      bracketIdx++;
-      if (bracketIdx < BRACKETS.length) {
-        challengerIdx = 2;
-        renderDuel(BRACKETS[bracketIdx].contestants[0], BRACKETS[bracketIdx].contestants[1]);
-      } else {
-        applyLeaguePreferences();
-        progFill.style.width = '100%';
-        showScreen(done);
-      }
+      applyLeaguePreferences();
+      progFill.style.width = '100%';
+      showScreen(done);
     }
   }
 
@@ -2881,7 +2877,7 @@ function setHeaderDate() {
 
   document.getElementById('ob-start').addEventListener('click', () => {
     showScreen(questions);
-    renderDuel(BRACKETS[0].contestants[0], BRACKETS[0].contestants[1]);
+    renderDuel(SELECTED[0].contestants[0], SELECTED[0].contestants[1]);
   });
   document.getElementById('ob-skip-all').addEventListener('click', finish);
   document.getElementById('ob-skip-q').addEventListener('click', () => advanceAfterPick({ leagues: [] }));
