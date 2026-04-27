@@ -809,6 +809,11 @@
       font-size: 12px; font-weight: 800; color: var(--secondary-text);
       text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0;
     }
+    .ob-choice-sub {
+      font-size: 11px; font-weight: 400; color: var(--secondary-text);
+      line-height: 1.3; margin-top: 2px;
+    }
+    .ob-choice.loser { opacity: 0.4; transform: scale(.95); }
   </style>
 </head>
 <body>
@@ -2731,32 +2736,61 @@ function setHeaderDate() {
 (function initOnboarding() {
   if (localStorage.getItem('sc_onboarding_done')) return;
 
-  // Preguntas: cada opción tiene un emoji, nombre y las ligas que refuerza
-  const QUESTIONS = [
+  const BRACKETS = [
     {
-      label: '¿Con cuál te quedas?',
-      a: { emoji: '🐐', name: 'Messi',      leagues: ['arg.1', 'esp.1', 'uefa.champions'] },
-      b: { emoji: '🔴', name: 'Cristiano',  leagues: ['eng.1', 'esp.1', 'uefa.champions'] }
+      title: '¿El 9 más letal de la historia?',
+      contestants: [
+        { emoji: '👽', name: 'Ronaldo\nFenómeno', leagues: ['lib','sud','laliga'] },
+        { emoji: '🦁', name: 'Zlatan',            leagues: ['pl','laliga','ucl','uel'] },
+        { emoji: '🇫🇷', name: 'Henry',            leagues: ['pl','ucl','uel'] },
+        { emoji: '🇧🇷', name: 'Romario',          leagues: ['lib','sud'] },
+        { emoji: '🎯', name: 'Van\nNistelrooy',   leagues: ['pl','ucl'] },
+        { emoji: '💪', name: 'Drogba',            leagues: ['pl','ucl','uel'] },
+      ]
     },
     {
-      label: '¿El mejor de los 2000s?',
-      a: { emoji: '🪄', name: 'Ronaldinho', leagues: ['bra.1', 'esp.1'] },
-      b: { emoji: '🎩', name: 'Kaká',       leagues: ['ita.1', 'esp.1', 'uefa.champions'] }
+      title: '¿El más grande de todos los tiempos?',
+      contestants: [
+        { emoji: '👑', name: 'Pelé',       leagues: ['lib','sud'] },
+        { emoji: '🇦🇷', name: 'Maradona',  leagues: ['arg','lib'] },
+        { emoji: '🐐', name: 'Messi',      leagues: ['arg','laliga','ucl'] },
+        { emoji: '🔴', name: 'Cristiano',  leagues: ['pl','laliga','ucl'] },
+        { emoji: '🪄', name: 'Ronaldinho', leagues: ['lib','laliga','ucl'] },
+        { emoji: '⭐', name: 'Zidane',     leagues: ['laliga','ucl'] },
+      ]
     },
     {
-      label: '¿Más entretenido de ver?',
-      a: { emoji: '⚽', name: 'Fútbol',      leagues: ['arg.1', 'chi.1', 'esp.1', 'eng.1', 'uefa.champions', 'conmebol.libertadores'] },
-      b: { emoji: '🏀', name: 'Basketball',  leagues: ['nba'] }
+      title: '¿El mejor equipo de la última década?',
+      contestants: [
+        { emoji: '⚪', name: 'Real Madrid',   sub: '14 Champions — los dueños de Europa',        leagues: ['laliga','ucl'] },
+        { emoji: '🔵', name: 'Barcelona',     sub: 'El tiki-taka que cambió el fútbol',           leagues: ['laliga','ucl'] },
+        { emoji: '💙', name: 'Man. City',     sub: 'La máquina de Guardiola, campeones de todo',  leagues: ['pl','ucl'] },
+        { emoji: '🔴', name: 'Bayern Munich', sub: 'Dominadores de Europa por años',              leagues: ['ucl'] },
+      ]
     },
     {
-      label: '¿Tu pasión es local o mundial?',
-      a: { emoji: '🇨🇱', name: 'Soy del patio\n(Chile / Arg)',  leagues: ['chi.1', 'arg.1', 'conmebol.libertadores', 'conmebol.sudamericana'] },
-      b: { emoji: '🌍', name: 'Sigo lo\nglobal',               leagues: ['eng.1', 'esp.1', 'uefa.champions', 'nba'] }
-    }
+      title: '¿A quién preferirías ver en vivo?',
+      contestants: [
+        { emoji: '🇨🇱', name: 'Alexis en\nel Monumental', leagues: ['chi','arg','lib','sud'] },
+        { emoji: '🌍',  name: 'Messi en\nel Camp Nou',    leagues: ['laliga','ucl','arg'] },
+      ]
+    },
+    {
+      title: '¿Cuál es peor de perderse?',
+      contestants: [
+        { emoji: '⚽', name: 'Final de\nChampions',  leagues: ['ucl','uel','laliga','pl'] },
+        { emoji: '🏀', name: 'Playoffs\nde la NBA',  leagues: ['nba'] },
+      ]
+    },
   ];
 
+  const TOTAL_DUELS = BRACKETS.reduce((sum, b) => sum + b.contestants.length - 1, 0);
   const leagueScore = {};
-  let currentQ = 0;
+  let bracketIdx    = 0;
+  let challengerIdx = 2;
+  let currentA      = null;
+  let currentB      = null;
+  let duelsCompleted = 0;
 
   const overlay   = document.getElementById('onboarding-overlay');
   const welcome   = document.getElementById('ob-welcome');
@@ -2772,92 +2806,89 @@ function setHeaderDate() {
     overlay.classList.remove('hidden');
     requestAnimationFrame(() => overlay.classList.add('visible'));
   }
-
   function hideOverlay() {
     overlay.classList.remove('visible');
     setTimeout(() => overlay.classList.add('hidden'), 350);
   }
-
   function showScreen(el) {
     [welcome, questions, done].forEach(s => s.classList.remove('active'));
     el.classList.add('active');
   }
 
-  function renderQuestion() {
-    const q = QUESTIONS[currentQ];
-    qLabel.textContent = q.label;
-    choiceA.innerHTML = `<span class="ob-choice-emoji">${q.a.emoji}</span>${q.a.name}`;
-    choiceB.innerHTML = `<span class="ob-choice-emoji">${q.b.emoji}</span>${q.b.name}`;
-    choiceA.classList.remove('selected');
-    choiceB.classList.remove('selected');
-    progFill.style.width  = `${((currentQ) / QUESTIONS.length) * 100}%`;
-    progLabel.textContent = `${currentQ + 1} / ${QUESTIONS.length}`;
+  function contestantHTML(c) {
+    const name = c.name.replace('\n', '<br>');
+    const sub  = c.sub ? `<span class="ob-choice-sub">${c.sub}</span>` : '';
+    return `<span class="ob-choice-emoji">${c.emoji}</span>${name}${sub}`;
   }
 
-  function pickAnswer(leagues) {
-    leagues.forEach(l => { leagueScore[l] = (leagueScore[l] || 0) + 1; });
-    nextQuestion();
+  function renderDuel(a, b) {
+    currentA = a;
+    currentB = b;
+    qLabel.textContent = BRACKETS[bracketIdx].title;
+    choiceA.innerHTML  = contestantHTML(a);
+    choiceB.innerHTML  = contestantHTML(b);
+    choiceA.classList.remove('selected','loser');
+    choiceB.classList.remove('selected','loser');
+    choiceA.disabled = false;
+    choiceB.disabled = false;
+    progFill.style.width  = `${(duelsCompleted / TOTAL_DUELS) * 100}%`;
+    progLabel.textContent = `${duelsCompleted + 1} / ${TOTAL_DUELS}`;
   }
 
-  function nextQuestion() {
-    currentQ++;
-    if (currentQ >= QUESTIONS.length) {
-      applyLeaguePreferences();
-      progFill.style.width = '100%';
-      showScreen(done);
+  function advanceAfterPick(winner) {
+    winner.leagues.forEach(l => { leagueScore[l] = (leagueScore[l] || 0) + 1; });
+    duelsCompleted++;
+
+    const bracket = BRACKETS[bracketIdx];
+    if (challengerIdx < bracket.contestants.length) {
+      renderDuel(winner, bracket.contestants[challengerIdx++]);
     } else {
-      renderQuestion();
+      bracketIdx++;
+      if (bracketIdx < BRACKETS.length) {
+        challengerIdx = 2;
+        renderDuel(BRACKETS[bracketIdx].contestants[0], BRACKETS[bracketIdx].contestants[1]);
+      } else {
+        applyLeaguePreferences();
+        progFill.style.width = '100%';
+        showScreen(done);
+      }
     }
   }
 
+  function pick(winnerEl, winner, loserEl) {
+    winnerEl.classList.add('selected');
+    loserEl.classList.add('loser');
+    choiceA.disabled = true;
+    choiceB.disabled = true;
+    setTimeout(() => advanceAfterPick(winner), 380);
+  }
+
   function applyLeaguePreferences() {
-    // Ordenar ligas por puntaje descendente, mezclar con las ya fijadas
-    const sorted = Object.entries(leagueScore)
-      .sort((a, b) => b[1] - a[1])
-      .map(([lid]) => lid);
-
-    // Obtener orden actual
-    let order = JSON.parse(localStorage.getItem('sc_league_order') || '[]');
-    // Agregar al frente las que tienen mayor puntaje si no están ya
-    const top = sorted.slice(0, 4);
-    const newOrder = [...new Set([...top, ...order])];
-    localStorage.setItem('sc_league_order', JSON.stringify(newOrder));
-
-    // Fijar automáticamente las top 3
-    let pinned = JSON.parse(localStorage.getItem('sc_pinned') || '[]');
+    const sorted = Object.entries(leagueScore).sort((a,b) => b[1]-a[1]).map(([l]) => l);
+    const top    = sorted.slice(0, 4);
+    let order    = JSON.parse(localStorage.getItem('sc_league_order') || '[]');
+    localStorage.setItem('sc_league_order', JSON.stringify([...new Set([...top, ...order])]));
+    let pinned   = JSON.parse(localStorage.getItem('sc_league_pins') || '[]');
     top.slice(0, 3).forEach(l => { if (!pinned.includes(l)) pinned.unshift(l); });
-    localStorage.setItem('sc_pinned', JSON.stringify(pinned));
+    localStorage.setItem('sc_league_pins', JSON.stringify(pinned));
   }
 
   function finish() {
     localStorage.setItem('sc_onboarding_done', '1');
     hideOverlay();
-    // Reconstruir pills con las preferencias nuevas
     buildPills();
   }
 
-  // Listeners
   document.getElementById('ob-start').addEventListener('click', () => {
     showScreen(questions);
-    renderQuestion();
+    renderDuel(BRACKETS[0].contestants[0], BRACKETS[0].contestants[1]);
   });
-
   document.getElementById('ob-skip-all').addEventListener('click', finish);
-  document.getElementById('ob-skip-q').addEventListener('click', nextQuestion);
+  document.getElementById('ob-skip-q').addEventListener('click', () => advanceAfterPick({ leagues: [] }));
   document.getElementById('ob-finish').addEventListener('click', finish);
+  choiceA.addEventListener('click', () => pick(choiceA, currentA, choiceB));
+  choiceB.addEventListener('click', () => pick(choiceB, currentB, choiceA));
 
-  choiceA.addEventListener('click', () => {
-    choiceA.classList.add('selected');
-    const q = QUESTIONS[currentQ];
-    setTimeout(() => pickAnswer(q?.a.leagues || []), 220);
-  });
-  choiceB.addEventListener('click', () => {
-    choiceB.classList.add('selected');
-    const q = QUESTIONS[currentQ];
-    setTimeout(() => pickAnswer(q?.b.leagues || []), 220);
-  });
-
-  // Mostrar con pequeño delay para que la app cargue primero
   setTimeout(showOverlay, 600);
 })();
 
