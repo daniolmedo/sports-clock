@@ -1042,6 +1042,7 @@ const LEAGUES = [
   { id:'arg',   sport:'soccer',     slug:'arg.1',                 name:'Argentina',    full:'Primera Argentina',    emoji:'🇦🇷', color:'#74ACDF', channels:['Disney+','ESPN'],          hasStandings:true  },
   { id:'lib',   sport:'soccer',     slug:'CONMEBOL.LIBERTADORES', name:'Libertad.',    full:'Copa Libertadores',    emoji:'🌎', color:'#B8860B', channels:['Disney+','Chilevisión'],  hasStandings:true  },
   { id:'sud',   sport:'soccer',     slug:'CONMEBOL.SUDAMERICANA', name:'Sudamericana', full:'Copa Sudamericana',    emoji:'🌿', color:'#27AE60', channels:['Disney+','Chilevisión'],  hasStandings:true  },
+  { id:'mundial',sport:'soccer',   slug:'fifa.world',            name:'Mundial',      full:'Copa del Mundo 2026',  emoji:'🌍', color:'#C7A000', channels:['Canal 13','Chilevisión','TNT Sports'], hasStandings:true },
   // 🏀 BÁSQUETBOL
   { id:'nba',   sport:'basketball', slug:'nba',                   name:'NBA',          full:'NBA',                  emoji:'🏀', color:'#C9082A', channels:['ESPN','NBA League Pass'],  hasStandings:true  },
   // 🏈 FÚTBOL AMERICANO
@@ -1087,6 +1088,11 @@ const POPULAR_TEAMS = {
     { name:'Manchester United',emoji:'🔴'}, { name:'Roma',            emoji:'🔴' },
     { name:'Lazio',           emoji:'🔵' }, { name:'Sevilla',         emoji:'⚪' },
     { name:'Ajax',            emoji:'🔴' }, { name:'Bayer Leverkusen',emoji:'🔴' },
+  ],
+  'Copa del Mundo 2026': [
+    { name:'Argentina',  emoji:'🇦🇷' }, { name:'Brazil',     emoji:'🇧🇷' },
+    { name:'France',     emoji:'🇫🇷' }, { name:'Spain',      emoji:'🇪🇸' },
+    { name:'Uruguay',    emoji:'🇺🇾' }, { name:'Colombia',   emoji:'🇨🇴' },
   ],
   'NBA': [
     { name:'Lakers',          emoji:'💛' }, { name:'Warriors',        emoji:'💙' },
@@ -1196,6 +1202,7 @@ async function ensureFavoriteTeamLogos() {
     { sport: 'soccer', slug: 'UEFA.EUROPA' },
     { sport: 'soccer', slug: 'CONMEBOL.LIBERTADORES' },
     { sport: 'soccer', slug: 'CONMEBOL.SUDAMERICANA' },
+    { sport: 'soccer', slug: 'fifa.world' },
     { sport: 'basketball', slug: 'nba' },
     { sport: 'football', slug: 'nfl' },
   ];
@@ -1211,13 +1218,18 @@ async function fetchLeagueStandings(league) {
     const res = await fetch(url);
     if (!res.ok) return;
     const data = await res.json();
-    const entries = data?.children?.[0]?.standings?.entries || [];
-    if (!entries.length) return;
+    const allGroups = data?.children?.length
+      ? data.children.map(c => c.standings?.entries || [])
+      : [data?.standings?.entries || []];
+    const allEntries = allGroups.flat();
+    if (!allEntries.length) return;
     const map = {};
-    entries.forEach(e => {
-      const name = e.team?.displayName;
-      const rank = e.stats?.find(s => s.name === 'rank')?.value;
-      if (name && rank != null) map[name] = { rank: Math.round(rank), total: entries.length };
+    allGroups.forEach(entries => {
+      entries.forEach(e => {
+        const name = e.team?.displayName;
+        const rank = e.stats?.find(s => s.name === 'rank')?.value;
+        if (name && rank != null) map[name] = { rank: Math.round(rank), total: entries.length };
+      });
     });
     standingsCache[league.id] = map;
   } catch (_) {}
@@ -1300,6 +1312,7 @@ function parseESPNEvent(rawEvent, leagueId) {
 
   return {
     _lid: leagueId, _utcDate: utcDate, _dateStr: toChileDateStr(utcDate),
+    _phase: rawEvent.season?.slug || 'group-stage',
     id: rawEvent.id,
     home: homeName, away: awayName,
     homeLogo, awayLogo,
@@ -1348,6 +1361,18 @@ function getMatchEmotion(ev) {
     { teams: ['Cowboys',    'Eagles'],              label: 'Clásico del Este NFC',         bonus: 8  },
     { teams: ['Bears',      'Packers'],             label: 'Clásico histórico de la NFL',  bonus: 8  },
     { teams: ['Patriots',   'Bills'],               label: 'Clásico del Este AFC',         bonus: 8  },
+    // Mundial — selecciones
+    { teams: ['Argentina',  'Brazil'],              label: 'Superclásico de América',      bonus: 15 },
+    { teams: ['Argentina',  'France'],              label: 'Final del 22 — revancha',      bonus: 14 },
+    { teams: ['Germany',    'Netherlands'],         label: 'Clásico europeo',              bonus: 12 },
+    { teams: ['Germany',    'England'],             label: 'Alemania vs Inglaterra',       bonus: 10 },
+    { teams: ['Brazil',     'Germany'],             label: 'Brasil vs Alemania',           bonus: 12 },
+    { teams: ['Spain',      'Portugal'],            label: 'Clásico ibérico',              bonus: 10 },
+    { teams: ['Argentina',  'Uruguay'],             label: 'Clásico del Plata',            bonus: 10 },
+    { teams: ['Brazil',     'France'],              label: 'Brasil vs Francia',            bonus: 10 },
+    { teams: ['Colombia',   'Argentina'],           label: 'Clásico de Sudamérica',        bonus: 8  },
+    { teams: ['Uruguay',    'Brazil'],              label: 'El Maracanazo tiene historia', bonus: 8  },
+    { teams: ['United States', 'Mexico'],           label: 'Clásico de CONCACAF',          bonus: 8  },
   ];
 
   const bigClubs = ['Real Madrid','Barcelona','Manchester City','Manchester United','Liverpool','Bayern','PSG','Juventus','Inter','AC Milan','Atletico','Flamengo','Palmeiras','Boca','River','Colo','Universidad de Chile','Universidad Católica','Lakers','Celtics','Heat','Bulls','Warriors','Nuggets','Chiefs','Cowboys','49ers','Packers','Patriots','Bills'];
@@ -1362,12 +1387,20 @@ function getMatchEmotion(ev) {
   const rivalryLabel = matchedRivalry?.label;
   const rivalryBonus = matchedRivalry?.bonus ?? 0;
 
-  const isCopa = ['lib', 'sud', 'ucl', 'uel'].includes(ev._lid);
+  const isMundial  = ev._lid === 'mundial';
+  const isKnockout = isMundial && ev._phase && ev._phase !== 'group-stage';
+  const isCopa = ['lib', 'sud', 'ucl', 'uel'].includes(ev._lid) || isKnockout;
   const isLive = ev.state === 'in' && ev.homeScore !== null && ev.awayScore !== null;
   const scoreDiff = isLive ? Math.abs(ev.homeScore - ev.awayScore) : 0;
   const homeLeads = isLive && ev.homeScore > ev.awayScore;
-  const homeTop = bigClubs.some(name => ev.home.includes(name));
-  const awayTop = bigClubs.some(name => ev.away.includes(name));
+
+  const bigNations = ['Germany','Brazil','France','Argentina','Spain','England','Portugal','Netherlands','Italy','Belgium','Uruguay','Colombia','Mexico','United States'];
+  const homeTop = isMundial
+    ? bigNations.some(n => ev.home.includes(n))
+    : bigClubs.some(name => ev.home.includes(name));
+  const awayTop = isMundial
+    ? bigNations.some(n => ev.away.includes(n))
+    : bigClubs.some(name => ev.away.includes(name));
   const topCount = Number(homeTop) + Number(awayTop);
   const isLeaderClash = topCount === 2;
   const isMatarOMorir = isCopa || isDerby || isLeaderClash;
@@ -1413,29 +1446,46 @@ function getMatchEmotion(ev) {
   if (isLeaderClash) score += 18;
   if (topCount === 1) score += 8;
   if (['nba','nfl','lib','ucl','uel','pl','laliga','arg','chi'].includes(ev._lid)) score += 10;
+  if (isMundial)     score += 18;
+  if (isKnockout)    score += 30;
   if (isCopa && topCount === 2) score += 8;
   if (isDerby && topCount === 2) score += 6;
 
   if (homeS && awayS) {
-    const posDiff = Math.abs(homeS.rank - awayS.rank);
-    if (posDiff <= 2)      score += 12;
-    else if (posDiff <= 5) score += 6;
-    else if (posDiff <= 9) score += 2;
+    if (isMundial) {
+      // Grupos de 4: posición 1-2 clasifica, 3-4 queda eliminado
+      const homeElim = homeS.rank >= 3;
+      const awayElim = awayS.rank >= 3;
+      const homeSafe = homeS.rank <= 2;
+      const awaySafe = awayS.rank <= 2;
+      bothInRelegation = homeElim && awayElim;
+      bothInTitle      = homeSafe && awaySafe && homeS.rank === 1 && awayS.rank === 1;
+      const posDiff = Math.abs(homeS.rank - awayS.rank);
+      if (posDiff === 0)     score += 12;
+      else if (posDiff <= 1) score += 8;
+      if (bothInRelegation)  score += 20;
+      else if (homeElim || awayElim) score += 12;
+    } else {
+      const posDiff = Math.abs(homeS.rank - awayS.rank);
+      if (posDiff <= 2)      score += 12;
+      else if (posDiff <= 5) score += 6;
+      else if (posDiff <= 9) score += 2;
 
-    const cutoff = Math.ceil(homeS.total * 0.2);
-    const homeTop = homeS.rank <= cutoff;
-    const homeBtm = homeS.rank > homeS.total - cutoff;
-    const awayTop = awayS.rank <= cutoff;
-    const awayBtm = awayS.rank > awayS.total - cutoff;
-    bothInRelegation = homeBtm && awayBtm;
-    bothInTitle      = homeTop && awayTop;
-    if (bothInRelegation || bothInTitle) score += 18;
-    else if (homeTop || homeBtm || awayTop || awayBtm) score += 10;
+      const cutoff = Math.ceil(homeS.total * 0.2);
+      const homeTopS = homeS.rank <= cutoff;
+      const homeBtm  = homeS.rank > homeS.total - cutoff;
+      const awayTopS = awayS.rank <= cutoff;
+      const awayBtm  = awayS.rank > awayS.total - cutoff;
+      bothInRelegation = homeBtm && awayBtm;
+      bothInTitle      = homeTopS && awayTopS;
+      if (bothInRelegation || bothInTitle) score += 18;
+      else if (homeTopS || homeBtm || awayTopS || awayBtm) score += 10;
+    }
   }
 
   const fires = score >= 78 ? 5 : score >= 56 ? 4 : score >= 34 ? 3 : score >= 18 ? 2 : 1;
 
-  const isSoccer = ['chi','arg','laliga','pl','ucl','uel','lib','sud'].includes(ev._lid);
+  const isSoccer = ['chi','arg','laliga','pl','ucl','uel','lib','sud','mundial'].includes(ev._lid);
 
   const derbyTemplates = rivalryLabel ? [
     `${rivalryLabel}: da igual la tabla, este partido es categoría aparte`,
@@ -1502,6 +1552,42 @@ function getMatchEmotion(ev) {
     `Sin grandes nombres, pero el fútbol siempre sorprende`,
   ];
 
+  const mundialPhaseLabel = {
+    'round-of-32':   'Ronda de 32',
+    'round-of-16':   'Octavos de final',
+    'quarterfinals': 'Cuartos de final',
+    'semifinals':    'Semifinal',
+    'final':         'La Gran Final',
+  }[ev._phase] || 'Eliminación directa';
+
+  const mundialKnockoutTemplates = [
+    `${mundialPhaseLabel} del Mundial — el que pierde vuelve a casa`,
+    `${mundialPhaseLabel}: no hay segunda oportunidad`,
+    `Eliminación directa en el Mundial — 90 minutos (o más) para todo`,
+    `${mundialPhaseLabel} del Mundial 2026: máxima presión, máximo fútbol`,
+  ];
+
+  const mundialGroupSurvivalTemplates = [
+    `Los dos necesitan puntos para no quedar eliminados — partido de vida o muerte`,
+    `Grupo de la muerte: el que pierde casi queda afuera`,
+    `Supervivencia pura — en el Mundial no hay revancha grupal`,
+    `Necesitan ganar o el sueño del Mundial se termina`,
+  ];
+
+  const mundialGroupTemplates = [
+    `Fase de grupos del Mundial — cada punto puede ser el que clasifica`,
+    `En el Mundial no hay partido fácil: tres puntos que valen un cupo`,
+    `Partido de grupos con todo por definir`,
+    `Mundial 2026 — el que gana hoy manda en el grupo`,
+  ];
+
+  const mundialBigClashTemplates = [
+    `Cuando los grandes se encuentran en el Mundial, el mundo para`,
+    `Choque de potencias en el grupo — esto define quién manda`,
+    `Selecciones de primer nivel frente a frente: partido para recordar`,
+    `Los favoritos del torneo se miden — el que gane da un paso enorme`,
+  ];
+
   const normalTemplates = isSoccer ? [
     `Fútbol es fútbol — puede aparecer algo`,
     `${ev.home} quiere los tres puntos, ${ev.away} también. Así de simple`,
@@ -1514,7 +1600,15 @@ function getMatchEmotion(ev) {
   ];
 
   let copy;
-  if (isDerby)                          copy = pick(derbyTemplates);
+  if (isMundial) {
+    if (isDerby)                        copy = pick(rivalryLabel
+                                          ? [`${rivalryLabel} en el Mundial — historia y presión a la vez`, `El ${rivalryLabel}: en el Mundial esto es otro nivel`, `${rivalryLabel} — el mundo para cuando juegan estos dos`]
+                                          : derbyTemplates);
+    else if (isKnockout)                copy = pick(mundialKnockoutTemplates);
+    else if (bothInRelegation)          copy = pick(mundialGroupSurvivalTemplates);
+    else if (isLeaderClash)             copy = pick(mundialBigClashTemplates);
+    else                                copy = pick(mundialGroupTemplates);
+  } else if (isDerby)                   copy = pick(derbyTemplates);
   else if (isCopa)                      copy = pick(copaTemplates);
   else if (isLeaderClash)               copy = pick(leaderTemplates);
   else if (bothInRelegation)            copy = pick(relegationTemplates);
@@ -1549,7 +1643,7 @@ async function loadEvents() {
     d.setDate(today.getDate() + i);
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   });
-  const standingLeagues = LEAGUES.filter(l => ['chi','arg','laliga','pl'].includes(l.id));
+  const standingLeagues = LEAGUES.filter(l => ['chi','arg','laliga','pl','mundial'].includes(l.id));
   const fetches = LEAGUES.flatMap(league =>
     dates.map(dateStr =>
       fetchESPN(league.sport, league.slug, dateStr).then(rawEvents => {
